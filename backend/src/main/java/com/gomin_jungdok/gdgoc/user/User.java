@@ -1,8 +1,5 @@
-package com.gomin_jungdok.gdgoc.vote;
+package com.gomin_jungdok.gdgoc.user;
 
-import com.gomin_jungdok.gdgoc.vote_option.VoteOption;
-import com.gomin_jungdok.gdgoc.post.Post;
-import com.gomin_jungdok.gdgoc.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -10,28 +7,34 @@ import org.springframework.data.annotation.CreatedDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "vote")
+@Table(name = "user")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Vote {
+public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int vote_id;
+    private int user_id;
 
-    @ManyToOne
-    @JoinColumn(name = "option_id", nullable = false)
-    private VoteOption voteOption;
+    @Column(length = 225)
+    private String id;
 
-    @ManyToOne
-    @JoinColumn(name = "post_id", nullable = false)
-    private Post post;
+    @Column(length = 225)
+    private String password;
 
-    @ManyToOne
-    @JoinColumn(name = "vote_user", nullable = false)
-    private User user;
+    @Column(nullable = false, length = 225)
+    private String nickname;
+
+    @Column(length = 225)
+    private String googleEmail;
+
+    @Column(length = 225)
+    private String socialId;
+
+    @Column(nullable = false, length = 225)
+    private String socialType;
 
     //@Column(name = "created_at", nullable = false, updatable = false)
     //private LocalDateTime createdAt = LocalDateTime.now();
@@ -40,3 +43,4 @@ public class Vote {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 }
+

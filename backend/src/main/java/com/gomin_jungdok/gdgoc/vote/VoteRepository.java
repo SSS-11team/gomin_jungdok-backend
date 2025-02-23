@@ -29,7 +29,4 @@ public interface VoteRepository extends JpaRepository<Vote, Integer> {
 
     @Query("SELECT v.voteOption, COUNT(v) FROM Vote v WHERE v.post.post_id = :post_id GROUP BY v.voteOption")
     List<Object[]> findVoteResults(@Param("post_id") int post_id);
-
-    // 중복 투표 방지
-    boolean existsByPostAndUser(Post post, User user);
 }
