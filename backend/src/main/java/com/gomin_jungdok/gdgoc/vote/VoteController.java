@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,7 +38,14 @@ public class VoteController {
         // postid로 post 불러와서 투표 결과 가져옴
         // 투표 결과 수정(1 or 2에 +1)
         // 투표 결과 저장 후 리턴
-        VoteResponseDTO result = voteService.vote(1L, id, voteRequest);   //(userId, id, voteOption); 근데 이게 null이라고?
+        VoteResponseDTO result;
+        try {
+            result = voteService.vote(1L, id, voteRequest);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("message", "서버 오류 발생"));
+        }
 
         // 응답 데이터 생성
         Map<String, Object> response = new HashMap<>();

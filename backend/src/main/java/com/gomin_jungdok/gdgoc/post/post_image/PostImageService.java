@@ -18,7 +18,7 @@ public class PostImageService {
     private final Storage storage;
     private final PostImageRepository postImageRepository;
 
-    @Value("${spring.cloud.gcp.storage.bucket}")
+    @Value("${cloud.gcp.storage.bucket}")
     private String bucketName;
 
     public PostImageService(PostImageRepository postImageRepository) {
