@@ -10,6 +10,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // Optional<User> save(User user);
 
-    Optional<User> findByEmail(String email);
+    Optional<User> findByGoogleEmail(String googleEmail);
 
 }

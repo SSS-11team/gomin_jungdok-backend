@@ -20,6 +20,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/post")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "*", allowedHeaders = "*", methods = {RequestMethod.GET, RequestMethod.POST})
 public class VoteController {
     private final VoteService voteService;
 
@@ -38,14 +39,7 @@ public class VoteController {
         // postid로 post 불러와서 투표 결과 가져옴
         // 투표 결과 수정(1 or 2에 +1)
         // 투표 결과 저장 후 리턴
-        VoteResponseDTO result;
-        try {
-            result = voteService.vote(1L, id, voteRequest);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Collections.singletonMap("message", "서버 오류 발생"));
-        }
+        VoteResponseDTO result = voteService.vote(1L, id, voteRequest);
 
         // 응답 데이터 생성
         Map<String, Object> response = new HashMap<>();

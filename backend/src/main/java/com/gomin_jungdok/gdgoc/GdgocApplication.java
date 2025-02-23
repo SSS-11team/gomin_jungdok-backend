@@ -10,7 +10,6 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @SpringBootApplication
-@ComponentScan(basePackages = "com.gomin_jungdok.gdgoc.post") // post 패키지만 스캔
 @EnableJpaAuditing
 @Configuration
 public class GdgocApplication {
@@ -19,7 +18,7 @@ public class GdgocApplication {
 		SpringApplication.run(GdgocApplication.class, args);
 	}
 
-	// CORS 설정
+//	 CORS 설정
 //	@Bean
 //	public WebMvcConfigurer corsConfigurer() {
 //		return new WebMvcConfigurer() {

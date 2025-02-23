@@ -11,5 +11,8 @@
         <module name="com.gomin_jungdok.gdgoc.main" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="gdgoc.main" target="17" />
+    </bytecodeTargetLevel>
   </component>
 </project>
