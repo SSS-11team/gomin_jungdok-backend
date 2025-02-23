@@ -19,6 +19,7 @@ public class SecurityConfig {
     public static PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -30,6 +31,7 @@ public class SecurityConfig {
         return http.build();
     }
 
+
     @Autowired
     public void configureGlobal(AuthenticationManagerBuilder auth, PasswordEncoder passwordEncoder) throws Exception {
         auth
@@ -37,4 +39,5 @@ public class SecurityConfig {
                 .withUser("user").password(passwordEncoder.encode("password"))
                 .roles("USER");
     }
+
 }
