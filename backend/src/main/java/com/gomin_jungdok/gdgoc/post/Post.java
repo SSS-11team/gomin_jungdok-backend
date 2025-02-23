@@ -35,4 +35,7 @@ public class Post {
 
     @Column(name = "best_post", nullable = false)
     private boolean bestPost = false;
+
+    @Column(name = "is_AI", nullable = false)
+    private boolean isAI = false;
 }

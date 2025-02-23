@@ -1,8 +1,8 @@
 package com.gomin_jungdok.gdgoc.vote;
 
 
-import com.gomin_jungdok.gdgoc.vote.DTO.VoteResponseDTO;
 import com.gomin_jungdok.gdgoc.vote.DTO.VoteRequestDTO;
+import com.gomin_jungdok.gdgoc.vote.DTO.VoteResponseDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;

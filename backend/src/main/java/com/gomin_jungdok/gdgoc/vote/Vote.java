@@ -30,7 +30,8 @@ public class Vote {
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 
+    //TODO 추후 voteUser가 아니라 user_id로 바꿔도 괜찮을듯
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "vote_user", nullable = false)
-    private User vote_user;
+    private User voteUser;
 }

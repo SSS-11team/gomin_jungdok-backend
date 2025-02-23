@@ -9,6 +9,6 @@ public class VoteResponseDTO {
     private int VoteOfOption1;
     private int VoteOfOption2;
 
-    private float option1Percentage;
-    private float option2Percentage;
+    private double option1Percentage;
+    private double option2Percentage;
 }

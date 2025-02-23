@@ -32,13 +32,12 @@ public class VoteService {
 
     @Transactional
     public VoteResponseDTO vote(Long vote_userId, Long postId, VoteRequestDTO voteRequest) {
-        log.info("📌 vote 요청 - userId: {}, postId: {}, voteOrder: {}", vote_userId, postId, voteRequest.getVote());
+
         int voteOrder = voteRequest.getVote();  // (1 or 2)
 
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
 
-        log.info("📌 post 조회 성공: {}", post.getId());
 
         VoteOption selectedOption = voteOptionRepository.findByPostAndOrder(post, voteOrder)
             .orElseThrow(() -> new RuntimeException("선택지가 존재하지 않습니다."));
@@ -51,16 +50,12 @@ public class VoteService {
 //            throw new RuntimeException("작성자는 투표할 수 없습니다.");
 //        }
 
-        log.info("📌 voter 조회 성공: {}", voter.getUserId());
-
         Vote vote = new Vote();
         vote.setPost(post); // Post ID로 POST 찾아오기
         vote.setVoteOption(selectedOption);
-        vote.setVote_user(voter); // User ID로 투표한 사람 찾아오기
+        vote.setVoteUser(voter); // User ID로 투표한 사람 찾아오기
         voteRepository.save(vote);
 
-
-        log.info("📌 투표 저장 완료");
 
         return voteResults(postId);
     }
@@ -76,8 +71,12 @@ public class VoteService {
         result.setVoteOfOption1(option1Votes);
         result.setVoteOfOption2(option2Votes);
 
-        int percentageOfOption1 = (totalVotes == 0) ? 0 : (option1Votes * 100) / totalVotes;
-        int percentageOfOption2 = (totalVotes == 0) ? 0 : (option2Votes * 100) / totalVotes;
+        double percentageOfOption1 = (totalVotes == 0) ? 0 : ((double) option1Votes / (double) totalVotes) * 100;
+        double percentageOfOption2 = (totalVotes == 0) ? 0 : ((double) option2Votes / (double) totalVotes) * 100;
+
+        // 소수점 첫째 자리까지 반올림
+        percentageOfOption1 = Math.round(percentageOfOption1 * 10.0) / 10.0;
+        percentageOfOption2 = Math.round(percentageOfOption2 * 10.0) / 10.0;
 
         result.setOption1Percentage(percentageOfOption1);
         result.setOption2Percentage(percentageOfOption2);
