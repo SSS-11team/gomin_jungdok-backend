@@ -5,4 +5,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PostImageRepository extends JpaRepository<PostImage, Long> {
+    List<PostImage> findByPost(Post post);
 }

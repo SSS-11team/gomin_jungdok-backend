@@ -25,4 +25,19 @@ public class PostController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(Map.of("message", "고민글 작성 완료"));
     }
+
+
+    // 오늘의 고민 선정
+    @GetMapping("/today")
+    public ResponseEntity<List<TodayPostsDTO>> getTodayPost() {
+        List<TodayPostsDTO> todayPosts = postService.getTodayPost();
+        return ResponseEntity.ok(todayPosts);
+    }
+
+    // 오늘의 고민 게시글 상세보기
+    @GetMapping("/today/{post_id}")
+    public ResponseEntity<PostDetailDTO> getPostDetail(@PathVariable int post_id) {
+        PostDetailDTO postDetail = postService.getPostDetail(post_id);
+        return ResponseEntity.ok(postDetail);
+    }
 }
