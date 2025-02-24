@@ -1,6 +1,8 @@
 package com.gomin_jungdok.gdgoc.post;
 
 import com.gomin_jungdok.gdgoc.post.dto.PostDetailResponseDto;
+import com.gomin_jungdok.gdgoc.post.dto.PostListDetailResponseDto;
+import com.gomin_jungdok.gdgoc.post.dto.PostListResponseDto;
 import com.gomin_jungdok.gdgoc.post.dto.PostWriteRequestDto;
 import com.gomin_jungdok.gdgoc.post.post_image.PostImage;
 import com.gomin_jungdok.gdgoc.post.post_image.PostImageRepository;
@@ -12,17 +14,20 @@ import com.gomin_jungdok.gdgoc.vote_option.VoteOption;
 import com.gomin_jungdok.gdgoc.vote_option.VoteOptionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -110,5 +115,62 @@ public class PostService {
                 (isVoted || isMine) ? option1Percentage : null,
                 (isVoted || isMine) ? option2Percentage : null
         );
+    }
+
+    public PostListResponseDto getPosts(int size, Long lastId) {
+        Pageable pageable = PageRequest.of(0, size);
+        List<Post> posts = postRepository.findPostsAfterId(lastId, pageable);
+
+        //TODO 로그인 구현 후 token에서 userId 추출해서 currentUserId에 사용하도록 수정해야함
+        Long currentUserId = 3L;
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 접속 유저"));
+
+        List<PostListDetailResponseDto> postListDetails = posts.stream().map(post -> {
+            boolean isVoted = voteRepository.existsByVoteUserAndPostId(currentUser, post.getId());
+            boolean isMine = post.getUserId().equals(currentUserId);
+            boolean isAi = post.isAI();
+
+            List<VoteOption> voteOptions = voteOptionRepository.findByPostId(post.getId());
+            String option1Content = null;
+            String option2Content = null;
+            Long option1Votes = 0L;
+            Long option2Votes = 0L;
+
+            for (VoteOption option : voteOptions) {
+                System.out.println("VoteOption ID: " + option.getId() + ", Vote Count: " + voteRepository.countByVoteOptionId(option.getId()));
+                if (option.getOrder() == 1) {
+                    option1Content = option.getText();
+                    option1Votes = voteRepository.countByVoteOptionId(option.getId());
+                } else if (option.getOrder() == 2) {
+                    option2Content = option.getText();
+                    option2Votes = voteRepository.countByVoteOptionId(option.getId());
+                }
+            }
+
+            //TODO 100%를 맞추기 위해 100에서 옵션1 비율을 빼서 옵션2 비율을 계산중 더 정확하고 효율적인 방법 생각해보기
+            Long totalVotes = option1Votes + option2Votes;
+            String option1Percentage = (totalVotes > 0) ? (option1Votes * 100 / totalVotes) + "%" : "0%";
+            String option2Percentage = (totalVotes > 0) ? 100 - (option1Votes * 100 / totalVotes) + "%" : "0%";
+
+            System.out.println(totalVotes);
+            System.out.println(option1Percentage + ": " + option2Percentage + "%");
+
+            return new PostListDetailResponseDto(
+                    post.getId(),
+                    isVoted,
+                    isMine,
+                    isAi,
+                    post.getTitle(),
+                    option1Content,
+                    option2Content,
+                    (isVoted || isMine) ? option1Votes : null,
+                    (isVoted || isMine) ? option2Votes : null,
+                    (isVoted || isMine) ? option1Percentage : null,
+                    (isVoted || isMine) ? option2Percentage : null
+            );
+        }).collect(Collectors.toList());
+
+        return new PostListResponseDto(size, postListDetails);
     }
 }

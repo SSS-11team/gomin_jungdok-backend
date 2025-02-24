@@ -1,6 +1,7 @@
 package com.gomin_jungdok.gdgoc.post;
 
 import com.gomin_jungdok.gdgoc.post.dto.PostDetailResponseDto;
+import com.gomin_jungdok.gdgoc.post.dto.PostListResponseDto;
 import com.gomin_jungdok.gdgoc.post.dto.PostWriteRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -35,12 +36,26 @@ public class PostController {
     public ResponseEntity<Map<String, Object>> getPostDetail(@PathVariable Long id) {
         PostDetailResponseDto responseDto = postService.getPostDetail(id);
 
-        System.out.println(responseDto.getTitle());
-
         //TODO 응답 반환하는 전용 함수 따로 만들어서 리팩토링 적용하기, 에러 핸들링 추가하기
         Map<String, Object> response = new HashMap<>();
         response.put("statusCode", 201);
         response.put("message", "고민글 상세보기 반환 성공");
+        response.put("data", responseDto);
+
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    //고민글 리스트 불러오기 api
+    @GetMapping()
+    public ResponseEntity<Map<String, Object>> getPostDetail(
+            @RequestParam(name = "size", defaultValue = "10") int size,
+            @RequestParam(name = "last-id", required = false) Long lastId) {
+        PostListResponseDto responseDto = postService.getPosts(size, lastId);
+
+        //TODO 응답 반환하는 전용 함수 따로 만들어서 리팩토링 적용하기, 에러 핸들링 추가하기
+        Map<String, Object> response = new HashMap<>();
+        response.put("statusCode", 200);
+        response.put("message", "고민글 리스트 반환 성공");
         response.put("data", responseDto);
 
         return ResponseEntity.status(HttpStatus.OK).body(response);
