@@ -10,6 +10,7 @@ import com.gomin_jungdok.gdgoc.post.post_image.PostImageService;
 import com.gomin_jungdok.gdgoc.user.User;
 import com.gomin_jungdok.gdgoc.user.UserRepository;
 import com.gomin_jungdok.gdgoc.vote.VoteRepository;
+import com.gomin_jungdok.gdgoc.vote.VoteUtils;
 import com.gomin_jungdok.gdgoc.vote_option.VoteOption;
 import com.gomin_jungdok.gdgoc.vote_option.VoteOptionRepository;
 import lombok.RequiredArgsConstructor;
@@ -77,25 +78,7 @@ public class PostService {
         boolean isVoted = (voteRepository.existsByVoteUserAndPostId(currentUser, postId));
 
         List<VoteOption> voteOptions = voteOptionRepository.findByPostId(postId);
-        String option1Content = null;
-        String option2Content = null;
-        Long option1Votes = 0L;
-        Long option2Votes = 0L;
-
-        for (VoteOption option : voteOptions) {
-            if (option.getOrder() == 1) {
-                option1Content = option.getText();
-                option1Votes = voteRepository.countByVoteOptionId(option.getId());
-            } else if (option.getOrder() == 2) {
-                option2Content = option.getText();
-                option2Votes = voteRepository.countByVoteOptionId(option.getId());
-            }
-        }
-
-        //TODO 100%를 맞추기 위해 100에서 옵션1 비율을 빼서 옵션2 비율을 계산중 더 정확하고 효율적인 방법 생각해보기
-        Long totalVotes = option1Votes + option2Votes;
-        String option1Percentage = (totalVotes > 0) ? (option1Votes * 100 / totalVotes) + "%" : "0%";
-        String option2Percentage = (totalVotes > 0) ? 100 - (option1Votes * 100 / totalVotes) + "%" : "0%";
+        Map<String, Object> voteResult = VoteUtils.calculateVoteResults(voteOptions, voteRepository, isMine || isVoted);
 
         List<PostImage> images = postImageRepository.findByPostId(post.getId());
         Map<String, String> imageUrls = new HashMap<>();
@@ -107,13 +90,21 @@ public class PostService {
         String formattedDate = dateFormat.format(post.getCreatedAt());
         
         return new PostDetailResponseDto(
-                isVoted, isMine, post.isAI(), writer.getProfileImage(),
-                writer.getNickname(), formattedDate, post.getTitle(), post.getDescription(),
-                imageUrls, option1Content, option2Content,
-                (isVoted || isMine) ? option1Votes : null,
-                (isVoted || isMine) ? option2Votes : null,
-                (isVoted || isMine) ? option1Percentage : null,
-                (isVoted || isMine) ? option2Percentage : null
+                isVoted,
+                isMine,
+                post.isAI(),
+                writer.getProfileImage(),
+                writer.getNickname(),
+                formattedDate,
+                post.getTitle(),
+                post.getDescription(),
+                imageUrls,
+                (String) voteResult.get("option1Content"),
+                (String) voteResult.get("option2Content"),
+                (Long) voteResult.get("option1Votes"),
+                (Long) voteResult.get("option2Votes"),
+                (String) voteResult.get("option1Percentage"),
+                (String) voteResult.get("option2Percentage")
         );
     }
 
@@ -122,7 +113,7 @@ public class PostService {
         List<Post> posts = postRepository.findPostsAfterId(lastId, pageable);
 
         //TODO 로그인 구현 후 token에서 userId 추출해서 currentUserId에 사용하도록 수정해야함
-        Long currentUserId = 3L;
+        Long currentUserId = 1L;
         User currentUser = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 접속 유저"));
 
@@ -132,29 +123,7 @@ public class PostService {
             boolean isAi = post.isAI();
 
             List<VoteOption> voteOptions = voteOptionRepository.findByPostId(post.getId());
-            String option1Content = null;
-            String option2Content = null;
-            Long option1Votes = 0L;
-            Long option2Votes = 0L;
-
-            for (VoteOption option : voteOptions) {
-                System.out.println("VoteOption ID: " + option.getId() + ", Vote Count: " + voteRepository.countByVoteOptionId(option.getId()));
-                if (option.getOrder() == 1) {
-                    option1Content = option.getText();
-                    option1Votes = voteRepository.countByVoteOptionId(option.getId());
-                } else if (option.getOrder() == 2) {
-                    option2Content = option.getText();
-                    option2Votes = voteRepository.countByVoteOptionId(option.getId());
-                }
-            }
-
-            //TODO 100%를 맞추기 위해 100에서 옵션1 비율을 빼서 옵션2 비율을 계산중 더 정확하고 효율적인 방법 생각해보기
-            Long totalVotes = option1Votes + option2Votes;
-            String option1Percentage = (totalVotes > 0) ? (option1Votes * 100 / totalVotes) + "%" : "0%";
-            String option2Percentage = (totalVotes > 0) ? 100 - (option1Votes * 100 / totalVotes) + "%" : "0%";
-
-            System.out.println(totalVotes);
-            System.out.println(option1Percentage + ": " + option2Percentage + "%");
+            Map<String, Object> voteResult = VoteUtils.calculateVoteResults(voteOptions, voteRepository, isMine || isVoted);
 
             return new PostListDetailResponseDto(
                     post.getId(),
@@ -162,12 +131,12 @@ public class PostService {
                     isMine,
                     isAi,
                     post.getTitle(),
-                    option1Content,
-                    option2Content,
-                    (isVoted || isMine) ? option1Votes : null,
-                    (isVoted || isMine) ? option2Votes : null,
-                    (isVoted || isMine) ? option1Percentage : null,
-                    (isVoted || isMine) ? option2Percentage : null
+                    (String) voteResult.get("option1Content"),
+                    (String) voteResult.get("option2Content"),
+                    (Long) voteResult.get("option1Votes"),
+                    (Long) voteResult.get("option2Votes"),
+                    (String) voteResult.get("option1Percentage"),
+                    (String) voteResult.get("option2Percentage")
             );
         }).collect(Collectors.toList());
 
