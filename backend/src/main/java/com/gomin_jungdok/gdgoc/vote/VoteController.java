@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,21 +18,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/post")
+@RequestMapping("/api/post/{id}/vote")
 @RequiredArgsConstructor
+@Tag(name = "vote")
     public class VoteController {
     private final VoteService voteService;
 
     //    @PostMapping("/1L/vote")
 //    public ResponseEntity<Map<String, Object>> vote(@RequestBody VoteRequestDTO voteRequest) {
     @PostMapping("/{id}/vote")
-    @Operation(summary = "swagger_test_operation")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "성공",
-                    content = {@Content(schema = @Schema(implementation = ResponseEntity.class))}),
-            @ApiResponse(responseCode = "404", description = "해당 ID의 유저가 존재하지 않습니다."),
-            @ApiResponse(responseCode = "500", description = "서버의 어딘가가 잘못되었습니다.")
-    })
+    @Operation(summary = "고민글 선택지 선택(투표)")
     public ResponseEntity<Map<String, Object>> vote(@PathVariable Long id, @RequestBody VoteRequestDTO voteRequest) {
 
         // postid로 post 불러와서 투표 결과 가져옴
