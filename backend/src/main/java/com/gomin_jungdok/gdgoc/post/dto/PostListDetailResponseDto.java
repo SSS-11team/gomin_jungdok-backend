@@ -2,6 +2,7 @@ package com.gomin_jungdok.gdgoc.post.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -9,19 +10,29 @@ import lombok.Setter;
 @Getter
 @Setter
 public class PostListDetailResponseDto {
+
+    @Schema(example = "1")
     private Long id;
 
     @JsonProperty("isVoted")
+    @Schema(example = "true")
     private boolean isVoted;
 
     @JsonProperty("isMine")
+    @Schema(example = "false")
     private boolean isMine;
 
     @JsonProperty("isAi")
+    @Schema(example = "false")
     private boolean isAi;
 
+    @Schema(example = "고민제목")
     private String title;
+
+    @Schema(example = "선택지1")
     private String option1Content;
+
+    @Schema(example = "선택지2")
     private String option2Content;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)

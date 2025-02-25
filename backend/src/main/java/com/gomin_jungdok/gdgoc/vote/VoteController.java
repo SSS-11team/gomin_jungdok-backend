@@ -1,5 +1,6 @@
 package com.gomin_jungdok.gdgoc.vote;
 
+import com.gomin_jungdok.gdgoc.post.dto.PostListResponseDto;
 import com.gomin_jungdok.gdgoc.vote.DTO.VoteResponseDTO;
 import com.gomin_jungdok.gdgoc.vote.DTO.VoteRequestDTO;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,9 +19,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/post/{id}/vote")
+@RequestMapping("/api/post")
 @RequiredArgsConstructor
-@Tag(name = "vote")
+@Tag(name = "/api/post/{id}/vote")
     public class VoteController {
     private final VoteService voteService;
 
@@ -28,6 +29,8 @@ import java.util.Map;
 //    public ResponseEntity<Map<String, Object>> vote(@RequestBody VoteRequestDTO voteRequest) {
     @PostMapping("/{id}/vote")
     @Operation(summary = "고민글 선택지 선택(투표)")
+    @ApiResponse(responseCode = "201", content = @Content(mediaType = "application/json",
+            schema = @Schema(implementation = VoteResponseDTO.class)))
     public ResponseEntity<Map<String, Object>> vote(@PathVariable Long id, @RequestBody VoteRequestDTO voteRequest) {
 
         // postid로 post 불러와서 투표 결과 가져옴
@@ -44,7 +47,7 @@ import java.util.Map;
 
         // 응답 데이터 생성
         Map<String, Object> response = new HashMap<>();
-        response.put("statusCode", HttpStatus.OK.value());
+        response.put("statusCode", HttpStatus.CREATED.value());
         response.put("message", "고민글 투표 성공");
         response.put("data", result);
 
