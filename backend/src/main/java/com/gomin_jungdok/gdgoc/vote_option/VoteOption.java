@@ -16,6 +16,7 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 public class VoteOption {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "option_id")

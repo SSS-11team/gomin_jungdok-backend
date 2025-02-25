@@ -8,6 +8,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "vote")
@@ -34,4 +37,8 @@ public class Vote {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "vote_user", nullable = false)
     private User voteUser;
+
+    @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 }
