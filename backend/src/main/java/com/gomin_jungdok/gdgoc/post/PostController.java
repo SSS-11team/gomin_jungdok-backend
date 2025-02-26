@@ -36,9 +36,13 @@ public class PostController {
         schema = @Schema(example = "{\"statusCode\": 201, \"message\": \"고민글 작성 완료\"}")))
     public ResponseEntity<Map<String, String>> createPost(@ModelAttribute PostWriteRequestDto requestDto) throws IOException {
         postService.createPost(requestDto);
+        
         //TODO 응답 반환하는 전용 함수 따로 만들어서 리팩토링 적용하기, 에러 핸들링 추가하기
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(Map.of("message", "고민글 작성 완료"));
+        Map<String, Object> response = new HashMap<>();
+        response.put("statusCode", 201);
+        response.put("message", "고민글 작성 성공");
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     //고민글 상세보기 api

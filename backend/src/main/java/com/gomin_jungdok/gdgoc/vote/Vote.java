@@ -17,9 +17,11 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class Vote {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int vote_id;
+    @Column(name = "vote_id")
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "option_id", nullable = false)
@@ -33,7 +35,6 @@ public class Vote {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "vote_user", nullable = false)
     private User voteUser;
-
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)

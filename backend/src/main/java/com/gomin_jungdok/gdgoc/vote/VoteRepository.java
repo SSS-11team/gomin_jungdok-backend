@@ -7,10 +7,13 @@ import com.gomin_jungdok.gdgoc.vote_option.VoteOption;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Repository
 public interface VoteRepository extends JpaRepository<Vote, Integer> {
     @Query("SELECT v.post.id, COUNT(v.vote_id) AS voteCount " +
             "FROM Vote v " +
@@ -25,6 +28,8 @@ public interface VoteRepository extends JpaRepository<Vote, Integer> {
     List<Object[]> findVoteResults(@Param("post_id") long post_id);
 
     long countByVoteOption(VoteOption option);
+
+    Long countByVoteOptionId(Long id);
 
     int countByPostId(Long postId);
 
