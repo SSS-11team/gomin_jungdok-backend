@@ -14,8 +14,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
-public interface VoteRepository extends JpaRepository<Vote, Integer> {
-    @Query("SELECT v.post.id, COUNT(v.vote_id) AS voteCount " +
+public interface VoteRepository extends JpaRepository<Vote, Long> {
+    @Query("SELECT v.post.id, COUNT(v.id) AS voteCount " +
             "FROM Vote v " +
             "WHERE v.createdAt BETWEEN :startOfDay AND :endOfDay " +
             "GROUP BY v.post.id " +
@@ -37,5 +37,4 @@ public interface VoteRepository extends JpaRepository<Vote, Integer> {
 
     boolean existsByVoteUserAndPostId(User voteUser, Long postId);
 
-    Long countByVoteOptionId(Long id);
 }

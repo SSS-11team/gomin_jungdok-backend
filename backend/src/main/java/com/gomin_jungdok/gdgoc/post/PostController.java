@@ -34,7 +34,7 @@ public class PostController {
     @Operation(summary = "고민 글 작성")
     @ApiResponse(responseCode = "201", content = @Content(mediaType = "multipart/form-data",
         schema = @Schema(example = "{\"statusCode\": 201, \"message\": \"고민글 작성 완료\"}")))
-    public ResponseEntity<Map<String, String>> createPost(@ModelAttribute PostWriteRequestDto requestDto) throws IOException {
+    public ResponseEntity<Map<String, Object>> createPost(@ModelAttribute PostWriteRequestDto requestDto) throws IOException {
         postService.createPost(requestDto);
         
         //TODO 응답 반환하는 전용 함수 따로 만들어서 리팩토링 적용하기, 에러 핸들링 추가하기
