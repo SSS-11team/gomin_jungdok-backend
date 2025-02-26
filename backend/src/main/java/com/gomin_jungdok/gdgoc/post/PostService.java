@@ -55,11 +55,8 @@ public class PostService {
         VoteOption option2 = new VoteOption(null, post, 2, requestDto.getOption2());
         voteOptionRepository.saveAll(List.of(option1, option2));
 
-        /*
-        TODO 이미지 저장이 GCP 401 권한문제로 잘 작동하지 않음 확인 필요
         // 이미지 저장
         postImageService.uploadPostImages(requestDto.getImages(), post);
-        */
     }
 
     public PostDetailResponseDto getPostDetail(Long postId) {
