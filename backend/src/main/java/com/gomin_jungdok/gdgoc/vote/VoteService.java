@@ -52,7 +52,7 @@ public class VoteService {
 //            throw new RuntimeException("작성자는 투표할 수 없습니다.");
 //        }
 
-        log.info("📌 voter 조회 성공: {}", voter.getUserId());
+        log.info("📌 voter 조회 성공: {}", voter.getId());
 
         Vote vote = new Vote();
         vote.setPost(post); // Post ID로 POST 찾아오기
