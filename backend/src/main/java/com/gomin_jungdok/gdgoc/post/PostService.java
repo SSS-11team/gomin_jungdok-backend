@@ -120,7 +120,6 @@ public class PostService {
     public PostListResponseDto getPosts(int size, Long lastId) {
         Pageable pageable = PageRequest.of(0, size);
         List<Post> posts = postRepository.findPostsAfterId(lastId, pageable);
-        System.out.println("조회된 게시글 개수: " + posts.size());
 
         //TODO 로그인 구현 후 token에서 userId 추출해서 currentUserId에 사용하도록 수정해야함
         Long currentUserId = 1L;
@@ -153,6 +152,7 @@ public class PostService {
         return new PostListResponseDto(size, postListDetails);
     }
 
+    //오늘의 고민 게시글 3개 조회
     public List<TodayPostsDTO> getTodayPost() {
         ZoneId koreaZone = ZoneId.of("Asia/Seoul");
         ZoneId utcZone = ZoneId.of("UTC");
@@ -167,6 +167,10 @@ public class PostService {
 
         System.out.println("UTC 기준 StartTime: " + startTime);
         System.out.println("UTC 기준 EndTime: " + endTime);
+
+        System.out.println("StartTime (KST 기준): " + startTime.atZone(ZoneId.of("UTC")).withZoneSameInstant(ZoneId.of("Asia/Seoul")));
+        System.out.println("EndTime (KST 기준): " + endTime.atZone(ZoneId.of("UTC")).withZoneSameInstant(ZoneId.of("Asia/Seoul")));
+
 
         List<Object[]> topVotedPosts = voteRepository.findTodayPosts(startTime, endTime);
 
@@ -208,7 +212,7 @@ public class PostService {
 
         List<VoteResultDTO> voteResults = voteData.stream()
                 .map(v -> {
-                    String name = v[0] instanceof VoteOption ? ((VoteOption) v[0]).getText() : "Unknown"; // 안전한 변환
+                    String name = (v[0] instanceof VoteOption) ? ((VoteOption) v[0]).getText() : "Unknown"; // 안전한 변환
                     long votes = v[1] instanceof Number ? ((Number) v[1]).longValue() : 0; // 숫자 변환 처리
                     long percentage = totalVotes == 0 ? 0 : Math.round(((double) votes / totalVotes) * 100);
                     return new VoteResultDTO(name, percentage);
