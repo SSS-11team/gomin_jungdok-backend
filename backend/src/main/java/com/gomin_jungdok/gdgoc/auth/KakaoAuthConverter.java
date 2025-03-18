@@ -1,0 +1,22 @@
+package com.gomin_jungdok.gdgoc.auth;
+
+import com.gomin_jungdok.gdgoc.auth.Dto.KakaoUserDto;
+import com.gomin_jungdok.gdgoc.user.User;
+import org.springframework.stereotype.Component;
+
+import java.util.Date;
+
+@Component
+public class KakaoAuthConverter {
+
+    public static User toUser(KakaoUserDto userInfo) {
+
+        return User.builder()
+                // .socialId(userInfo.getId())
+                .nickname("익명")
+                .email(userInfo.getEmail())
+                .socialType("KAKAO")
+                .createdAt(new Date())
+                .build();
+    }
+}

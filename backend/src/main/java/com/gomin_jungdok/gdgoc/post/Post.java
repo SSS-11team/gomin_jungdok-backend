@@ -1,6 +1,7 @@
 package com.gomin_jungdok.gdgoc.post;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 import java.util.Date;
@@ -23,6 +24,7 @@ public class Post {
     @Column(name = "post_title", nullable = false, length = 255)
     private String title;
 
+    @NotBlank(message = "상세설명은 필수입니다.")
     @Column(name = "post_desc", columnDefinition = "TEXT")
     private String description;
 

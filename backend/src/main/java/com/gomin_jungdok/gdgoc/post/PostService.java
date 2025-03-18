@@ -71,6 +71,7 @@ public class PostService {
         postImageService.uploadPostImages(requestDto.getImages(), post);
     }
 
+    // 고민 글 상세보기
     public PostDetailResponseDto getPostDetail(Long postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 게시글"));
@@ -117,6 +118,7 @@ public class PostService {
         );
     }
 
+    // 고민 글 조회
     public PostListResponseDto getPosts(int size, Long lastId) {
         Pageable pageable = PageRequest.of(0, size);
         List<Post> posts = postRepository.findPostsAfterId(lastId, pageable);
@@ -191,7 +193,6 @@ public class PostService {
                 })
                 .collect(Collectors.toList());
     }
-
 
     //오늘의 고민 상세 조회
     public PostDetailDTO getPostDetail(long post_id) {
