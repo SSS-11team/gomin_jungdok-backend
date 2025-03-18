@@ -31,7 +31,8 @@ public class Comment {
 */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long comment_id; // 댓글 id
+    @Column(name = "comment_id", nullable = false)
+    private long id; // 댓글 id
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
