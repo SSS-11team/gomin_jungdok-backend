@@ -1,5 +1,6 @@
 package com.gomin_jungdok.gdgoc.comment;
 
+import com.gomin_jungdok.gdgoc.comment.dto.CommentCreateDTO;
 import com.gomin_jungdok.gdgoc.post.Post;
 import com.gomin_jungdok.gdgoc.post.PostRepository;
 import com.gomin_jungdok.gdgoc.user.User;
@@ -7,8 +8,6 @@ import com.gomin_jungdok.gdgoc.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
