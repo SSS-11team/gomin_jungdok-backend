@@ -67,7 +67,7 @@ public class PostController {
     @Operation(summary = "고민 글 리스트 불러오기")
     @ApiResponse(responseCode = "200", content = @Content(mediaType = "application/json",
         schema = @Schema(implementation = PostListResponseDto.class)))
-    public ResponseEntity<Map<String, Object>> getPostDetail(
+    public ResponseEntity<Map<String, Object>> getPost(
             @Parameter(description = "가져올 게시글 개수 (기본값: 10)")
             @RequestParam(name = "size", defaultValue = "10") int size,
 
@@ -99,7 +99,7 @@ public class PostController {
     @Operation(summary = "오늘의 고민 게시글 상세보기")
     @ApiResponse(responseCode = "201", content = @Content(mediaType = "application/json",
             schema = @Schema(implementation = PostDetailDTO.class)))
-    public ResponseEntity<PostDetailDTO> getPostDetail(@PathVariable long post_id) {
+    public ResponseEntity<PostDetailDTO> getTodayPostDetail(@PathVariable long post_id) {
         PostDetailDTO postDetail = postService.getPostDetail(post_id);
         return ResponseEntity.ok(postDetail);
     }
