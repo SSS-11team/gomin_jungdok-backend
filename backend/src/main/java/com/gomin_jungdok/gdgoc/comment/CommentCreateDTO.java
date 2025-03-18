@@ -6,9 +6,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class CommentCreateDTO {
-    private long user_id;
-    private long post_id;
-    private Integer parent_comment_id;
-    private String comment_desc;
-    private int hierarchy;
+    private Integer parentCommentId;
+    private String description;
 }

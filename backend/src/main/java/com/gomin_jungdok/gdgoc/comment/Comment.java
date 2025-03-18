@@ -7,6 +7,7 @@ import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 
 @Entity
 @Table(name = "comment")
@@ -45,15 +46,12 @@ public class Comment {
     private Comment parentComment; // 부모 댓글
 
     @Column(name="comment_desc", columnDefinition = "TEXT", nullable = false)
-    private String comment_desc; // 댓글 내용
+    private String description; // 댓글 내용
 
     @Column(name="hierarchy", nullable = false)
-    private int hierarchy; // 댓글 계층
+    private int hierarchy = 0; // 댓글 계층
 
-    //@Column(name = "created_at", nullable = false, updatable = false)
-    //private LocalDateTime createdAt = LocalDateTime.now();
-
-    @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt; // 댓글 작성 시간
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date createdAt = new Date();
 }

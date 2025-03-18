@@ -18,31 +18,33 @@ public class CommentService {
     private final CommentRepository commentRepository;
 
     @Transactional
-    public Comment saveComment(CommentCreateDTO commentCreateDTO, long id) {
-        User user = userRepository.findById(commentCreateDTO.getUser_id())
-                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + commentCreateDTO.getUser_id()));
+    public void createComment(CommentCreateDTO requestDTO, long postId) {
+        //TODO 로그인 구현 후 token에서 userId 추출해서 setUserId에 사용하도록 수정해야함
+        Long userId = 1L;
 
-        Post post = postRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Post not found with id: " + id));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
 
-        Comment parentComment = null;
-        int hierarchy = 0; //db의 디폴트값 변경 예정
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("Post not found with id: " + postId));
 
-        if (commentCreateDTO.getParent_comment_id() != null) {
-            //부모 댓글이 존재할 경우 부모 댓글 조회
-            parentComment = commentRepository.findById(commentCreateDTO.getParent_comment_id())
-                    .orElseThrow(() -> new IllegalArgumentException("Comment not found with id:" + commentCreateDTO.getParent_comment_id()));
-            hierarchy = parentComment.getHierarchy() + 1; // 부모 댓글의 계층보다 1 증가
+        Comment comment = new Comment();
+
+        //부모 댓글이 존재할 경우 부모 댓글 조회
+        if (requestDTO.getParentCommentId() != null) {
+            Comment parentComment = null;
+            parentComment = commentRepository.findById(requestDTO.getParentCommentId())
+                    .orElseThrow(() -> new IllegalArgumentException("Comment not found with id:" + requestDTO.getParentCommentId()));
+            int hierarchy = parentComment.getHierarchy() + 1; // 부모 댓글의 계층보다 1 증가
+
+            comment.setParentComment(parentComment);
+            comment.setHierarchy(hierarchy);
         }
 
-        Comment comment = Comment.builder()
-                .user(user)
-                .post(post)
-                .parentComment(parentComment)
-                .comment_desc(commentCreateDTO.getComment_desc())
-                .hierarchy(hierarchy)
-                .createdAt(LocalDateTime.now())
-                .build();
-        return commentRepository.save(comment);
+        comment.setUser(user);
+        comment.setPost(post);
+        comment.setDescription(requestDTO.getDescription());
+
+        commentRepository.save(comment);
     }
 }
