@@ -249,11 +249,11 @@ public class KakaoService {
         String firebaseUid = userRecord.getUid();
 
         // 4. 해당 사용자의 DB 정보 업데이트 (uid 저장)
-//        User user = kakaoRepository.findByEmail(email);
-//        if (user != null) {
-//            user.setUid(firebaseUid); // Firebase의 uid 저장
-//            kakaoRepository.save(user);
-//        }
+        User user = kakaoRepository.findByEmail(email);
+        if (user != null) {
+            user.setUid(firebaseUid); // Firebase의 uid 저장
+            kakaoRepository.save(user);
+        }
 
         // 5. Firebase Custom Token 생성 후 리턴
         return FirebaseAuth.getInstance().createCustomToken(firebaseUid);
