@@ -1,4 +1,4 @@
-package com.gomin_jungdok.gdgoc.auth;
+package com.gomin_jungdok.gdgoc.auth.Converter;
 
 import com.gomin_jungdok.gdgoc.auth.Dto.KakaoUserDto;
 import com.gomin_jungdok.gdgoc.user.User;

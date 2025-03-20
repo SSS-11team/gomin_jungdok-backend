@@ -28,7 +28,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.gomin_jungdok.gdgoc.auth.KakaoAuthConverter.toUser;
+import static com.gomin_jungdok.gdgoc.auth.Converter.KakaoAuthConverter.toUser;
 
 @Service
 public class KakaoService {
