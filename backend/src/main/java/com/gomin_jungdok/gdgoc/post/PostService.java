@@ -153,15 +153,16 @@ public class PostService {
     }
 
     //오늘의 고민 게시글 3개 조회
+    @Transactional
     public List<TodayPostsDTO> getTodayPost() {
         ZoneId koreaZone = ZoneId.of("Asia/Seoul");
         ZoneId utcZone = ZoneId.of("UTC");
 
-        // 현재 시간을 UTC 기준으로 변환
-        LocalDate todayInKorea = Instant.now().atZone(koreaZone).toLocalDate();
+        //현재 시간을 UTC 기준으로 변환
+        LocalDate yesterdayInKorea = Instant.now().atZone(koreaZone).toLocalDate().minusDays(1);
 
-        // 오늘 00:00:00 ~ 23:59:59을 UTC 기준으로 변환
-        LocalDateTime startTime = todayInKorea.atStartOfDay(koreaZone)
+        //어제 00:00:00 ~ 23:59:59을 UTC 기준으로 변환
+        LocalDateTime startTime = yesterdayInKorea.atStartOfDay(koreaZone)
                 .withZoneSameInstant(utcZone).toLocalDateTime();
         LocalDateTime endTime = startTime.plusDays(1).minusSeconds(1);
 
@@ -174,19 +175,63 @@ public class PostService {
 
         List<Object[]> topVotedPosts = voteRepository.findTodayPosts(startTime, endTime);
 
+        //선정된 게시글 ID 리스트
+        List<Long> todayPosts = topVotedPosts.stream()
+                .map(obj -> (long) obj[0])
+                .collect(Collectors.toList());
+
+        //today_post 값을 true로 변경
+        if (!todayPosts.isEmpty()) {
+            postRepository.updateTodayPostStatus(todayPosts, true);
+        } else {
+            System.out.println("업데이트할 게시글이 없습니다.");
+        }
+
+        // 댓글 개수 조회
+        List<Object[]> commentCounts = commentRepository.countCommentsByPostIds(todayPosts);
+        Map<Long, Long> commentCountMap = commentCounts.stream()
+                .collect(Collectors.toMap(obj -> (Long) obj[0], obj -> (Long) obj[1]));
+
         return topVotedPosts.stream()
                 .map(obj -> {
                     long postId = (long) obj[0];
                     long voteCount = (long) obj[1];
+                    long commentCount = commentCountMap.getOrDefault(postId, 0L); // 댓글 개수 적용
 
                     Post post = postRepository.findById(postId)
                             .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다: " + postId));
+
+                    //해당 게시글의 모든 옵션 가져오기
+                    List<VoteOption> allOptions = voteOptionRepository.findByPostId(postId);
+
+                    //해당 게시글의 투표된 옵션 가져오기
+                    List<Object[]> voteData = voteRepository.findVoteResults(postId);
+
+                    //옵션별 투표 수 매칭 (없는 건 0으로 설정)
+                    Map<String, Long> voteCountMap = voteData.stream()
+                            .collect(Collectors.toMap(
+                                    v -> ((VoteOption) v[0]).getText(),
+                                    v -> v[1] instanceof Number ? ((Number) v[1]).longValue() : 0
+                            ));
+
+                    long totalVotes = voteCountMap.values().stream().mapToLong(Long::longValue).sum();
+
+                    //모든 옵션에 대해 투표 정보 생성
+                    List<VoteResultDTO> voteResults = allOptions.stream()
+                            .map(option -> {
+                                long votes = voteCountMap.getOrDefault(option.getText(), 0L);
+                                long percentage = totalVotes == 0 ? 0 : Math.round(((double) votes / totalVotes) * 100);
+                                return new VoteResultDTO(option.getText(), percentage);
+                            })
+                            .collect(Collectors.toList());
 
                     return new TodayPostsDTO(
                             post.getId(),
                             post.getTitle(),
                             post.getDescription(),
-                            voteCount
+                            voteResults,
+                            voteCount,
+                            commentCount
                     );
                 })
                 .collect(Collectors.toList());
