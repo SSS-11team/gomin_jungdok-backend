@@ -15,6 +15,7 @@ import com.gomin_jungdok.gdgoc.user.User;
 import com.gomin_jungdok.gdgoc.user.UserRepository;
 import com.gomin_jungdok.gdgoc.vote.VoteUtils;
 import com.gomin_jungdok.gdgoc.vote.VoteRepository;
+import com.gomin_jungdok.gdgoc.comment.CommentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -53,6 +54,7 @@ public class PostService {
     private final VoteOptionRepository voteOptionRepository;
     private final PostImageService postImageService;
     private final PostImageRepository postImageRepository;
+    private final CommentRepository commentRepository;
 
     @Transactional
     public void createPost(PostWriteRequestDto requestDto) throws IOException {
@@ -187,7 +189,7 @@ public class PostService {
             System.out.println("업데이트할 게시글이 없습니다.");
         }
 
-        // 댓글 개수 조회
+        //댓글 개수 조회
         List<Object[]> commentCounts = commentRepository.countCommentsByPostIds(todayPosts);
         Map<Long, Long> commentCountMap = commentCounts.stream()
                 .collect(Collectors.toMap(obj -> (Long) obj[0], obj -> (Long) obj[1]));
