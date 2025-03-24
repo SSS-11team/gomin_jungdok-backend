@@ -154,25 +154,34 @@ public class PostService {
         return new PostListResponseDto(size, postListDetails);
     }
 
-    //오늘의 고민 게시글 3개 조회
+    //오늘의 고민 게시글 3개 조회(23:59~19:00)
     @Transactional
     public List<TodayPostsDTO> getTodayPost() {
         ZoneId koreaZone = ZoneId.of("Asia/Seoul");
         ZoneId utcZone = ZoneId.of("UTC");
 
-        //현재 시간을 UTC 기준으로 변환
-        LocalDate yesterdayInKorea = Instant.now().atZone(koreaZone).toLocalDate().minusDays(1);
+        //오늘 날짜 (KST 기준)
+        LocalDate todayInKorea = Instant.now().atZone(koreaZone).toLocalDate();
+        //어제 날짜 (KST 기준)
+        LocalDate yesterdayInKorea = todayInKorea.minusDays(1);
 
-        //어제 00:00:00 ~ 23:59:59을 UTC 기준으로 변환
-        LocalDateTime startTime = yesterdayInKorea.atStartOfDay(koreaZone)
-                .withZoneSameInstant(utcZone).toLocalDateTime();
-        LocalDateTime endTime = startTime.plusDays(1).minusSeconds(1);
+        //어제 23:59:00 (KST) → UTC 변환
+        LocalDateTime startTime = yesterdayInKorea.atTime(23, 59)
+                .atZone(koreaZone)
+                .withZoneSameInstant(utcZone)
+                .toLocalDateTime();
+
+        //오늘 19:00:00 (KST) → UTC 변환
+        LocalDateTime endTime = todayInKorea.atTime(19, 0)
+                .atZone(koreaZone)
+                .withZoneSameInstant(utcZone)
+                .toLocalDateTime();
 
         System.out.println("UTC 기준 StartTime: " + startTime);
         System.out.println("UTC 기준 EndTime: " + endTime);
 
-        System.out.println("StartTime (KST 기준): " + startTime.atZone(ZoneId.of("UTC")).withZoneSameInstant(ZoneId.of("Asia/Seoul")));
-        System.out.println("EndTime (KST 기준): " + endTime.atZone(ZoneId.of("UTC")).withZoneSameInstant(ZoneId.of("Asia/Seoul")));
+        System.out.println("StartTime (KST 기준): " + startTime.atZone(utcZone).withZoneSameInstant(koreaZone));
+        System.out.println("EndTime (KST 기준): " + endTime.atZone(utcZone).withZoneSameInstant(koreaZone));
 
 
         List<Object[]> topVotedPosts = voteRepository.findTodayPosts(startTime, endTime);
@@ -189,7 +198,7 @@ public class PostService {
             System.out.println("업데이트할 게시글이 없습니다.");
         }
 
-        //댓글 개수 조회
+        // 댓글 개수 조회
         List<Object[]> commentCounts = commentRepository.countCommentsByPostIds(todayPosts);
         Map<Long, Long> commentCountMap = commentCounts.stream()
                 .collect(Collectors.toMap(obj -> (Long) obj[0], obj -> (Long) obj[1]));
@@ -251,18 +260,30 @@ public class PostService {
                 .map(PostImage::getImageUrl)
                 .collect(Collectors.toList());
 
-        // 투표 결과 조회
-        List<Object[]> voteData = voteRepository.findVoteResults(post_id);
-        long totalVotes = voteData.stream()
-                .mapToLong(v -> v[1] instanceof Number ? ((Number) v[1]).longValue() : 0)
-                .sum(); // 총 투표 수 계산
+        // 댓글 개수 조회
+        Long commentCount = commentRepository.countCommentsByPostId(post_id);
 
-        List<VoteResultDTO> voteResults = voteData.stream()
-                .map(v -> {
-                    String name = (v[0] instanceof VoteOption) ? ((VoteOption) v[0]).getText() : "Unknown"; // 안전한 변환
-                    long votes = v[1] instanceof Number ? ((Number) v[1]).longValue() : 0; // 숫자 변환 처리
+        //해당 게시글의 모든 옵션 가져오기
+        List<VoteOption> allOptions = voteOptionRepository.findByPostId(post_id);
+
+        //해당 게시글의 투표된 옵션 가져오기
+        List<Object[]> voteData = voteRepository.findVoteResults(post_id);
+
+        //옵션별 투표 수 매칭 (없는 건 0으로 설정)
+        Map<String, Long> voteCountMap = voteData.stream()
+                .collect(Collectors.toMap(
+                        v -> ((VoteOption) v[0]).getText(),
+                        v -> v[1] instanceof Number ? ((Number) v[1]).longValue() : 0
+                ));
+
+        long totalVotes = voteCountMap.values().stream().mapToLong(Long::longValue).sum();
+
+        //모든 옵션에 대해 투표 정보 생성
+        List<VoteResultDTO> voteResults = allOptions.stream()
+                .map(option -> {
+                    long votes = voteCountMap.getOrDefault(option.getText(), 0L);
                     long percentage = totalVotes == 0 ? 0 : Math.round(((double) votes / totalVotes) * 100);
-                    return new VoteResultDTO(name, percentage);
+                    return new VoteResultDTO(option.getText(), percentage);
                 })
                 .collect(Collectors.toList());
 
@@ -283,7 +304,8 @@ public class PostService {
                 post.getTitle(),
                 post.getDescription(),
                 imageUrls,
-                voteResults
+                voteResults,
+                commentCount
                 //comments
         );
     }
