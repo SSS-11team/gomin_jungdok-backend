@@ -1,5 +1,9 @@
 package com.gomin_jungdok.gdgoc.auth;
 
+import com.gomin_jungdok.gdgoc.auth.Dto.KakaoLoginResponse;
+import com.gomin_jungdok.gdgoc.auth.Dto.UserInfoDto;
+import com.gomin_jungdok.gdgoc.post.dto.PostDetailResponseDto;
+import com.google.gson.JsonObject;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -10,7 +14,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,13 +27,14 @@ import java.util.Map;
 @Tag(name = "카카오 로그인")
 public class AuthController {
 
+    private final KakaoService kakaoService;
+//    private final UserRepository userRepository;
+
     @Value("${kakao.client}")
     private String clientId;
 
     @Value("${kakao.redirect-uri}")
     private String redirectUri;
-
-    private final KakaoService kakaoService;
 
     @GetMapping("/kakao/login")
     @Operation(summary = "/api/auth/kakao/login")
@@ -50,39 +54,64 @@ public class AuthController {
     }
 
     @GetMapping("/kakao/callback")
-    @Operation(summary = "카카오 로그인 콜백", security = @SecurityRequirement(name = "BearerAuth"))
+    @Operation(summary = "api/auth/kakao/callback")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(example = "{\"statusCode\": 200, \"message\": \"로그인 성공\"}"))),
-            @ApiResponse(responseCode = "401", content = @Content(schema = @Schema(example = "{\"statusCode\": 401, \"message\": \"토큰 생성 실패\"}")))
+            @ApiResponse(responseCode = "200", description = "로그인 성공",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = KakaoLoginResponse.class))),
+            @ApiResponse(responseCode = "401", description = "토큰 생성 실패",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(example = "{\"statusCode\": 401, \"message\": \"토큰 생성 실패\"}")))
     })
     public ResponseEntity<Map<String, Object>> kakaoCallback(
             @Parameter(description = "카카오에서 전달된 인증 코드", required = true)
             @RequestParam("code") String code) {
 
-        // ✅ 카카오 로그인 처리 및 Firebase Custom Token 생성
-        Map<String, Object> firebaseToken = kakaoService.execKakaoLogin(code);
-        // 검증
-        String customToken = firebaseToken.get("customToken").toString();
-        System.out.println("firebaseToken = " + firebaseToken);
-        if (firebaseToken == null || !firebaseToken.containsKey("customToken")) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("statusCode", 401, "message", "토큰 생성 실패"));
-        }
+        String accessToken = kakaoService.getKakaoAccessToken(code);
+        UserInfoDto result = kakaoService.getKakaoUserInfo(accessToken);
+
+        System.out.println("result = " + result);
+
 
         Map<String, Object> response = new HashMap<>();
-        response.put("statusCode", 200);
-        response.put("message", "로그인 성공");
-        response.put("customToken", customToken);
 
-        return ResponseEntity.ok(response);
+        if (result.getId() == null)
+        {
+            response.put("statusCode", 401);
+            response.put("message", "토큰 생성 실패");
+        }
+        else {
+
+            response.put("statusCode", 200);
+            response.put("message", "로그인 성공");
+            response.put("result", result);
+        }
+
+        return ResponseEntity.ok()
+                .header("Authorization", "Bearer " + accessToken) // 헤더에 액세스 토큰 추가
+                .body(response); // 바디에 유저 정보 포함
 
     }
 
-//    @GetMapping("/user")
-//    public ResponseEntity<Map<String, Object>> getUser(@RequestHeader("Authorization") String accessToken) {
-//        KakaoUserDto userInfo = kakaoService.getKakaoUserInfo(accessToken);
-//    }
+    @GetMapping("/kakao/user")
+    @Operation(summary = "api/auth/kakao/user",
+            security = @SecurityRequirement(name = "BearerAuth"))
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "로그인 성공",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserInfoDto.class))),
+            @ApiResponse(responseCode = "401", description = "토큰 생성 실패",
+                    content = @Content(mediaType = "application/json", schema = @Schema(example = "{\"statusCode\": 401, \"message\": \"토큰 생성 실패\"}")))
+    })
+    public UserInfoDto getUser(@RequestHeader("Authorization") String accessToken) {
+
+// "Bearer " 제거
+        if (accessToken.startsWith("Bearer ")) {
+            accessToken = accessToken.substring(7); // "Bearer " 이후의 실제 토큰만 추출
+        }
 
 
-
-
+        UserInfoDto userInfo = kakaoService.getKakaoUserInfo(accessToken);
+        System.out.println("userInfo = " + userInfo);
+        return userInfo;
+    }
 }

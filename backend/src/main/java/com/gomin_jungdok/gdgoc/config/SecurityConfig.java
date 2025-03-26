@@ -1,6 +1,6 @@
 package com.gomin_jungdok.gdgoc.config;
 
-import com.gomin_jungdok.gdgoc.FirebaseTokenFilter;
+import com.gomin_jungdok.gdgoc.TokenFilter;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
@@ -25,7 +25,7 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final FirebaseTokenFilter firebaseTokenFilter;
+    private final TokenFilter tokenFilter;
 
     @Bean
     public static PasswordEncoder passwordEncoder() {
@@ -46,7 +46,7 @@ public class SecurityConfig {
                         ).permitAll() // 인증 없이 접근 가능
                         .anyRequest().authenticated() // 나머지 요청은 인증 필요
                 )
-                .addFilterBefore(firebaseTokenFilter, UsernamePasswordAuthenticationFilter.class); // Firebase 필터 추가
+                .addFilterBefore(tokenFilter, UsernamePasswordAuthenticationFilter.class); // Firebase 필터 추가
 
 
         return http.build();
