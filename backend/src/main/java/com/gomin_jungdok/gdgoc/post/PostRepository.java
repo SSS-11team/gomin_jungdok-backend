@@ -13,4 +13,13 @@ import java.util.List;
 public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("SELECT p FROM Post p WHERE (:lastId IS NULL OR p.id < :lastId) AND DATE(p.createdAt) = CURRENT_DATE ORDER BY p.id DESC")
     List<Post> findPostsAfterId(@Param("lastId") Long lastId, Pageable pageable);
+
+    @Query("SELECT p FROM Post p WHERE (:lastId IS NULL OR p.id < :lastId) " +
+            "AND p.postCategory IN :category " +
+            "AND DATE(p.createdAt) = CURRENT_DATE " +
+            "ORDER BY p.id DESC")
+    List<Post> findPostsByCategoryAfterId(@Param("category") List<PostCategory> category,
+                                          @Param("lastId") Long lastId,
+                                          Pageable pageable);
+
 }
