@@ -40,4 +40,8 @@ public class Post {
 
     @Column(name = "is_AI", nullable = false)
     private boolean isAI = false;
+
+    @Column(name = "category", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private PostCategory postCategory = PostCategory.ETC;
 }

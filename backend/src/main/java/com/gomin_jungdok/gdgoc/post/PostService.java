@@ -4,7 +4,6 @@ import com.gomin_jungdok.gdgoc.post.dto.PostWriteRequestDto;
 import com.gomin_jungdok.gdgoc.post.dto.PostListDetailResponseDto;
 import com.gomin_jungdok.gdgoc.post.dto.PostDetailResponseDto;
 import com.gomin_jungdok.gdgoc.post.dto.PostListResponseDto;
-import com.gomin_jungdok.gdgoc.post.dto.PostWriteRequestDto;
 import com.gomin_jungdok.gdgoc.post.post_image.PostImage;
 import com.gomin_jungdok.gdgoc.post.post_image.PostImageService;
 import com.gomin_jungdok.gdgoc.post.post_image.PostImageRepository;
@@ -19,19 +18,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.repository.query.Param;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -40,8 +34,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -61,6 +53,7 @@ public class PostService {
         post.setUserId(1L);
         post.setTitle(requestDto.getTitle());
         post.setDescription(requestDto.getDescription());
+        post.setPostCategory(PostCategory.fromValue(requestDto.getCategory()));
 
         post = postRepository.save(post);
 
@@ -103,6 +96,7 @@ public class PostService {
                 isVoted,
                 isMine,
                 post.isAI(),
+                post.getPostCategory().getValue(),
                 writer.getProfileImage(),
                 writer.getNickname(),
                 formattedDate,
@@ -119,9 +113,20 @@ public class PostService {
     }
 
     // 고민 글 조회
-    public PostListResponseDto getPosts(int size, Long lastId) {
+    public PostListResponseDto getPosts(int size, Long lastId, List<String> category) {
         Pageable pageable = PageRequest.of(0, size);
-        List<Post> posts = postRepository.findPostsAfterId(lastId, pageable);
+
+        // 카테고리가 있는 경우 해당 카테고리로 필터링한 게시글 조회
+        List<Post> posts;
+        if (category != null && !category.isEmpty()) {
+            List<PostCategory> formattingCategory = category.stream()
+                    .map(PostCategory::fromValue)
+                    .toList();
+
+            posts = postRepository.findPostsByCategoryAfterId(formattingCategory, lastId, pageable);
+        } else {
+            posts = postRepository.findPostsAfterId(lastId, pageable);
+        }
 
         //TODO 로그인 구현 후 token에서 userId 추출해서 currentUserId에 사용하도록 수정해야함
         Long currentUserId = 1L;
@@ -141,6 +146,7 @@ public class PostService {
                     isVoted,
                     isMine,
                     isAi,
+                    post.getPostCategory().getValue(),
                     post.getTitle(),
                     (String) voteResult.get("option1Content"),
                     (String) voteResult.get("option2Content"),
@@ -188,6 +194,7 @@ public class PostService {
                             post.getId(),
                             post.getTitle(),
                             post.getDescription(),
+                            post.getPostCategory().getValue(),
                             voteCount
                     );
                 })
@@ -236,6 +243,7 @@ public class PostService {
                 post.getId(),
                 post.getTitle(),
                 post.getDescription(),
+                post.getPostCategory().getValue(),
                 imageUrls,
                 voteResults
                 //comments

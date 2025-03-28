@@ -72,8 +72,12 @@ public class PostController {
             @RequestParam(name = "size", defaultValue = "10") int size,
 
             @Parameter(description = "마지막 게시글 ID (페이징 처리용)")
-            @RequestParam(name = "last-id", required = false) Long lastId) {
-        PostListResponseDto responseDto = postService.getPosts(size, lastId);
+            @RequestParam(name = "last-id", required = false) Long lastId,
+
+            @Parameter(description = "고민글 카테고리 필터링")
+            @RequestParam(name = "category", required = false) List<String> category) {
+
+        PostListResponseDto responseDto = postService.getPosts(size, lastId, category);
 
         //TODO 응답 반환하는 전용 함수 따로 만들어서 리팩토링 적용하기, 에러 핸들링 추가하기
         Map<String, Object> response = new HashMap<>();

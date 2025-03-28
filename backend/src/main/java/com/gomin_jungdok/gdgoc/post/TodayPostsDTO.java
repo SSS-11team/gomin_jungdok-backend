@@ -13,5 +13,7 @@ public class TodayPostsDTO  {
 
     private String description; // 게시글 내용
 
+    private String category;
+
     private long voteCount;
 }

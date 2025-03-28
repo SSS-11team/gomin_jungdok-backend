@@ -1,36 +1,37 @@
 package com.gomin_jungdok.gdgoc.auth;
 
 import com.gomin_jungdok.gdgoc.auth.Dto.KakaoTokenResponseDto;
-import com.gomin_jungdok.gdgoc.auth.Dto.KakaoUserDto;
+import com.gomin_jungdok.gdgoc.auth.Dto.UserInfoDto;
 import com.gomin_jungdok.gdgoc.user.User;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.UserRecord;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 import static com.gomin_jungdok.gdgoc.auth.Converter.KakaoAuthConverter.toUser;
 
 @Service
+@RequiredArgsConstructor
 public class KakaoService {
 
     private static final Logger log = LoggerFactory.getLogger(KakaoService.class);
@@ -43,80 +44,14 @@ public class KakaoService {
 
     private final KakaoRepository kakaoRepository; // UserRepository 주입
 
-    @Autowired
-    public KakaoService(KakaoRepository kakaoRepository) {
-        this.kakaoRepository = kakaoRepository;
-    }
 
-    // 카카오 로그인 프로세스 진행 (최종 목표는 Firebase CustomToken 발행)
-    @Transactional
-    public Map<String, Object> execKakaoLogin(String code) {
-        Map<String, Object> result = new HashMap<String,Object>();
-
-        // 1. 엑세스 토큰 받기
-        String accessToken = getKakaoAccessToken(code);
-        result.put("access_token", accessToken);
-        System.out.println("accessToken = " + accessToken);
-
-        // 2. 사용자 정보 읽어오기
-        KakaoUserDto userInfo = getKakaoUserInfo(accessToken);
-
-        // String id = userInfo.getId();  // 3963637345
-        String email = userInfo.getEmail();
-        result.put("kakao", userInfo);
-        System.out.println("user_info = " + userInfo);
-
-        // 3. firebase CustomToken 발행
-        User user = kakaoRepository.findByEmail(email);
-        System.out.println("찾은 사용자 : " + (user != null ? user.getId() : "없음"));
-
-        if (user == null) {
-            // 새로운 사용자 등록
-            user = toUser(userInfo);
-            kakaoRepository.save(user); // 사용자 정보 저장
-            System.out.println("사용자 저장 완료 : " + user.getId());
-            System.out.println("user.getNickname() = " + user.getNickname());
-        }
-
-        String customToken = "";
-        try {
-            // 4. Firebase Custom Token 발급 & Firebase UID 저장
-            customToken = createFirebaseCustomToken(userInfo);
-
-            // Firebase UID 가져오기
-            String firebaseUid = FirebaseAuth.getInstance().getUserByEmail(email).getUid();
-
-            // 5. 사용자 정보에 Firebase UID 저장
-            user.setUid(firebaseUid);
-            kakaoRepository.save(user);
-
-            result.put("customToken", customToken);
-            result.put("firebaseUid", firebaseUid); // Firebase UID 추가
-            result.put("errYn", "N");
-            result.put("errMsg", "");
-        } catch (FirebaseAuthException e) {
-            System.out.println("FirebaseAuthException.class.getName() = " + FirebaseAuthException.class.getName());
-            result.put("errYn", "N");
-            result.put("errMsg", "FirebaseException : " + e.getMessage());
-        } catch (Exception e) {
-            System.out.println("e = " + e);
-            result.put("errYn", "N");
-            result.put("errMsg", "Exception : " + e.getMessage());
-        }
-
-        System.out.println("customToken = " + customToken);
-
-        // 4. 클라이언트에서 Firebase 로그인 후 ID 토큰을 가져오도록 유도
-        result.put("customToken", customToken);
-        result.put("errYn", "N");
-        result.put("errMsg", "");
-
-        System.out.println("result = " + result);
-        return result;  // customToken만 포함된 Map 반환
-    }
 
     public String getKakaoAccessToken(String code) {
         String reqURL = "https://kauth.kakao.com/oauth/token";
+
+        if (code == null || code.isEmpty()) {
+            throw new IllegalArgumentException("인증 코드가 없습니다.");
+        }
 
         RestTemplate rt = new RestTemplate();
 
@@ -134,55 +69,58 @@ public class KakaoService {
         // HttpHeader와 HttpBody를 하나의 오브젝트에 담기
         HttpEntity<MultiValueMap<String, String>> kakaoTokenRequest = new HttpEntity<>(params, headers);
 
-        // Http 요청하기 - Post 방식으로 - 그리고 response 변수의 응답 받음.
-        ResponseEntity<KakaoTokenResponseDto> response = rt.exchange(
-                reqURL, HttpMethod.POST, kakaoTokenRequest, KakaoTokenResponseDto.class);
+        try {
+            System.out.println("code = " + code);
+            // Http 요청하기 - Post 방식으로 - 그리고 response 변수의 응답 받음.
+            ResponseEntity<KakaoTokenResponseDto> response = rt.exchange(reqURL, HttpMethod.POST, kakaoTokenRequest, KakaoTokenResponseDto.class);
 
-
-        return response.getBody() != null ? response.getBody().getAccessToken() : null;
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                return response.getBody().getAccessToken();
+            } else {
+                throw new RuntimeException("Failed to get Kakao access token.");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error occurred while requesting Kakao access token: " + e.getMessage(), e);
+        }
     }
 
-    public KakaoUserDto getKakaoUserInfo(String accessToken) {
+    @Transactional
+    public UserInfoDto getKakaoUserInfo(String accessToken) {
+        System.out.println("accessToken = " + accessToken);
 
         // 요청하는 클라이언트마다 가진 정보가 다를 수 있기에 HashMap 타입으로 선언
-        KakaoUserDto userInfo = new KakaoUserDto();
+        UserInfoDto userInfo = new UserInfoDto();
         String reqURL = "https://kapi.kakao.com/v2/user/me";
+        RestTemplate rt = new RestTemplate();
 
-        try{
-            URL url = new URL(reqURL);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            // System.out.println(conn.getResponseCode());
-            conn.setRequestMethod("GET");
 
-            // 요청에 필요한 Header에 필요한 내용
-            conn.setRequestProperty("Authorization", "Bearer " + accessToken);
+        // 헤더 설정
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Bearer " + accessToken);
 
-            int responseCode = conn.getResponseCode();
-            log.debug("responseCode : " + responseCode);
+        HttpEntity<String> entity = new HttpEntity<>(headers);
 
-            BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-            String line = "";
-            String result = "";
-
-            while ((line = br.readLine()) != null) {
-                result += line;
-            }
-            log.debug("response body : " + result);
-
+        // API 호출
+        ResponseEntity<String> response = rt.exchange(reqURL, HttpMethod.GET, entity, String.class);
+        String result = response.getBody();
+        if (response.getStatusCode() == HttpStatus.OK && result != null) {
             JsonElement element = JsonParser.parseString(result);
-            System.out.println("element = " + element);
-
             String email = element.getAsJsonObject().get("kakao_account").getAsJsonObject().get("email").getAsString();
-            // String id = element.getAsJsonObject().get("id").getAsString();  // "id" 값을 String으로 가져오기
 
-            System.out.println("getKakaoUserInfo");
-            // System.out.println("id = " + id);  // kakao안에 있는 userid
-            // userInfo.setId(id);
+            User user = kakaoRepository.findByEmail(email);
+            if (user == null) {
+                user = toUser(userInfo);
+                kakaoRepository.save(user);
+            }
+
             userInfo.setEmail(email);
-
-        } catch (IOException e) {
-            e.printStackTrace();
+            userInfo.setId(user.getId());
+            userInfo.setCreatedAt(user.getCreatedAt());
+            userInfo.setNickname(user.getNickname());
+            userInfo.setSocialType(user.getSocialType());
         }
+
+        System.out.println("userInfo = " + userInfo);
 
         return userInfo;
     }
@@ -214,13 +152,15 @@ public class KakaoService {
             log.debug("response body : " + result);
             br.close();
 
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            throw new RuntimeException("HTTP error occurred while requesting Kakao access token: " + e.getMessage(), e);
+        } catch (Exception e) {
+            throw new RuntimeException("Error occurred while requesting Kakao access token: " + e.getMessage(), e);
         }
         return accessToken;
     }
 
-    public String createFirebaseCustomToken(KakaoUserDto userInfo) throws Exception {
+    public String createFirebaseCustomToken(UserInfoDto userInfo) throws Exception {
 
         UserRecord userRecord;
         String email = userInfo.getEmail();

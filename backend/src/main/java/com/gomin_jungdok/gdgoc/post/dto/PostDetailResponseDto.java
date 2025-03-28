@@ -2,6 +2,8 @@ package com.gomin_jungdok.gdgoc.post.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.gomin_jungdok.gdgoc.post.PostCategory;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 import java.util.Map;
@@ -18,6 +20,9 @@ public class PostDetailResponseDto {
 
     @JsonProperty("isAi")
     private boolean isAi;
+
+    @JsonProperty("category")
+    private String category;
 
     private String profileImage;
     private String writerNickname;
@@ -44,6 +49,7 @@ public class PostDetailResponseDto {
             boolean isVoted,
             boolean isMine,
             boolean isAi,
+            String category,
             String profileImage,
             String writerNickname,
             String createdAt,
@@ -59,6 +65,7 @@ public class PostDetailResponseDto {
         this.isVoted = isVoted;
         this.isMine = isMine;
         this.isAi = isAi;
+        this.category = category;
         this.profileImage = profileImage;
         this.writerNickname = writerNickname;
         this.createdAt = createdAt;

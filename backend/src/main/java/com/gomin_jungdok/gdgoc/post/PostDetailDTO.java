@@ -12,6 +12,7 @@ public class PostDetailDTO {
     private long post_id;
     private String post_title;
     private String post_desc;
+    private String category;
     private List<String> imageUrls;
     private List<VoteResultDTO> voteResults; // 투표 결과 (퍼센트)
     //private List<CommentDTO> comments; // 댓글 목록
