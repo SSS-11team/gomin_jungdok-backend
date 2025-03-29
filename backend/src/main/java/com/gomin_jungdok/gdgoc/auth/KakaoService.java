@@ -1,7 +1,9 @@
 package com.gomin_jungdok.gdgoc.auth;
 
+import com.gomin_jungdok.gdgoc.jwt.AuthTokens;
 import com.gomin_jungdok.gdgoc.auth.Dto.KakaoTokenResponseDto;
 import com.gomin_jungdok.gdgoc.auth.Dto.UserInfoDto;
+import com.gomin_jungdok.gdgoc.jwt.AuthTokensGenerator;
 import com.gomin_jungdok.gdgoc.user.User;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
@@ -14,7 +16,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
@@ -24,9 +25,6 @@ import org.springframework.web.client.RestTemplate;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 import static com.gomin_jungdok.gdgoc.auth.Converter.KakaoAuthConverter.toUser;
 
@@ -42,7 +40,29 @@ public class KakaoService {
     @Value("${kakao.redirect-uri}")
     private String redirectUri;
 
-    private final KakaoRepository kakaoRepository; // UserRepository 주입
+    private final KakaoRepository kakaoRepository;
+    private final AuthTokensGenerator authTokensGenerator;
+
+
+    // code를 getKakaoAccessToken 에 전달 -> accessToken받아오기
+
+    public AuthTokens kakaoLogin(String accessToken) {
+
+        UserInfoDto userInfo = getKakaoUserInfo(accessToken);
+
+        Long userId = userInfo.getId();
+
+        AuthTokens authTokens = authTokensGenerator.generate(userId.toString());
+
+
+
+        return authTokens;
+    }
+
+
+
+
+
 
 
 
@@ -84,8 +104,8 @@ public class KakaoService {
         }
     }
 
-    @Transactional
     public UserInfoDto getKakaoUserInfo(String accessToken) {
+        // 유저 정보 반환, if 신규 유저면 가입
         System.out.println("accessToken = " + accessToken);
 
         // 요청하는 클라이언트마다 가진 정보가 다를 수 있기에 HashMap 타입으로 선언

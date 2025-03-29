@@ -1,5 +1,6 @@
 package com.gomin_jungdok.gdgoc;
 
+import com.gomin_jungdok.gdgoc.jwt.JwtTokenProvider;
 import com.gomin_jungdok.gdgoc.user.User;
 import com.gomin_jungdok.gdgoc.user.UserRepository;
 import com.google.firebase.auth.FirebaseAuth;
@@ -24,9 +25,11 @@ public class TokenFilter extends OncePerRequestFilter {
 
     private final UserRepository userRepository;
     private final RestTemplate restTemplate;
+    private final JwtTokenProvider jwtTokenProvider;
 
-    public TokenFilter(UserRepository userRepository) {
+    public TokenFilter(UserRepository userRepository, JwtTokenProvider jwtTokenProvider) {
         this.userRepository = userRepository;
+        this.jwtTokenProvider = jwtTokenProvider;
         this.restTemplate = new RestTemplate();
     }
 
@@ -47,7 +50,7 @@ public class TokenFilter extends OncePerRequestFilter {
             if (isFirebaseToken(token)) {
                 validateFirebaseToken(token);
             } else {
-                validateKakaoToken(token);
+                validateJwtToken(token);
             }
 
         } catch (Exception e) {
@@ -79,34 +82,9 @@ public class TokenFilter extends OncePerRequestFilter {
                 new UsernamePasswordAuthenticationToken(uid, null, null));
     }
 
-    private void validateKakaoToken(String token) throws Exception {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + token);
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-
-        ResponseEntity<Map> response = restTemplate.exchange(
-                "https://kapi.kakao.com/v1/user/access_token_info",
-                HttpMethod.GET,
-                entity,
-                Map.class
-        );
-
-        if (response.getStatusCode() != HttpStatus.OK) {
-            throw new Exception("Invalid Kakao Token");
-        }
-
-        Map<String, Object> body = response.getBody();
-        String kakaoUserId = body.get("id").toString();
-        User user = userRepository.findByUid(kakaoUserId);
-        if (user == null || !"KAKAO".equals(user.getSocialType())) {
-            throw new Exception("Invalid KAKAO user");
-        }
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(kakaoUserId, null, null));
+    private void validateJwtToken(String token) throws Exception {
+        String userId = jwtTokenProvider.validateAndGetUserId(token);
     }
-
-
-
 }
 
 

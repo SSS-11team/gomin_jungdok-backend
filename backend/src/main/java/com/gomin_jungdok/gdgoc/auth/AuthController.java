@@ -1,9 +1,8 @@
 package com.gomin_jungdok.gdgoc.auth;
 
+import com.gomin_jungdok.gdgoc.jwt.AuthTokens;
 import com.gomin_jungdok.gdgoc.auth.Dto.KakaoLoginResponse;
 import com.gomin_jungdok.gdgoc.auth.Dto.UserInfoDto;
-import com.gomin_jungdok.gdgoc.post.dto.PostDetailResponseDto;
-import com.google.gson.JsonObject;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -67,15 +66,18 @@ public class AuthController {
             @Parameter(description = "카카오에서 전달된 인증 코드", required = true)
             @RequestParam("code") String code) {
 
-        String accessToken = kakaoService.getKakaoAccessToken(code);
-        UserInfoDto result = kakaoService.getKakaoUserInfo(accessToken);
 
-        System.out.println("result = " + result);
+        String accessToken = kakaoService.getKakaoAccessToken(code);
+
+        AuthTokens tokens = kakaoService.kakaoLogin(accessToken);   // jwt 토큰 발급하는데 써야 함
+
+
+        System.out.println("tokens = " + tokens);
 
 
         Map<String, Object> response = new HashMap<>();
 
-        if (result.getId() == null)
+        if (tokens == null)
         {
             response.put("statusCode", 401);
             response.put("message", "토큰 생성 실패");
@@ -84,7 +86,7 @@ public class AuthController {
 
             response.put("statusCode", 200);
             response.put("message", "로그인 성공");
-            response.put("result", result);
+            response.put("result", tokens);
         }
 
         return ResponseEntity.ok()
@@ -104,11 +106,10 @@ public class AuthController {
     })
     public UserInfoDto getUser(@RequestHeader("Authorization") String accessToken) {
 
-// "Bearer " 제거
+        // "Bearer " 제거
         if (accessToken.startsWith("Bearer ")) {
             accessToken = accessToken.substring(7); // "Bearer " 이후의 실제 토큰만 추출
         }
-
 
         UserInfoDto userInfo = kakaoService.getKakaoUserInfo(accessToken);
         System.out.println("userInfo = " + userInfo);

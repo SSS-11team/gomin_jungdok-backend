@@ -39,6 +39,8 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
+                                "/api/auth/kakao/login",
+                                "/api/auth/kakao/callback",
                                 "/api/post/**",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
@@ -72,8 +74,4 @@ public class SecurityConfig {
                 )
                 .addSecurityItem(new SecurityRequirement().addList("BearerAuth")); // 기본 Security 적용
     }
-
-
-
-
 }
