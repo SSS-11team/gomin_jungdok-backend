@@ -9,12 +9,12 @@ import java.util.Date;
 @Component
 public class KakaoAuthConverter {
 
-    public static User toUser(UserInfoDto userInfo) {
+    public static User toUser(String email) {
 
         return User.builder()
                 // .socialId(userInfo.getId())
                 .nickname("익명")
-                .email(userInfo.getEmail())
+                .socialId(email)
                 .socialType("KAKAO")
                 .createdAt(new Date())
                 .build();

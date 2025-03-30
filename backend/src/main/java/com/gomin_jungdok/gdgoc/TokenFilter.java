@@ -1,5 +1,6 @@
 package com.gomin_jungdok.gdgoc;
 
+import com.gomin_jungdok.gdgoc.jwt.JwtUtil;
 import com.gomin_jungdok.gdgoc.user.User;
 import com.gomin_jungdok.gdgoc.user.UserRepository;
 import com.google.firebase.auth.FirebaseAuth;
@@ -8,54 +9,57 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.*;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Map;
+import java.util.Optional;
 
 @Component
 public class TokenFilter extends OncePerRequestFilter {
 
     private final UserRepository userRepository;
-    private final RestTemplate restTemplate;
+    private final JwtUtil jwtTokenProvider;
 
-    public TokenFilter(UserRepository userRepository) {
+    public TokenFilter(UserRepository userRepository, JwtUtil jwtTokenProvider) {
         this.userRepository = userRepository;
-        this.restTemplate = new RestTemplate();
+        this.jwtTokenProvider = jwtTokenProvider;
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        String header = request.getHeader("Authorization");
+        String requestURI = request.getRequestURI();  // 현재 요청 경로 확인
+        String token = resolveToken(request);
 
-        if (header == null || !header.startsWith("Bearer ")) {
+
+        // ✅ `/refresh` 경로는 필터링 제외 (Refresh Token 검증은 AuthController에서 수행)
+        if (requestURI.equals("/api/auth/kakao/refresh")) {
+            System.out.println("/api/auth/kakao/refresh");
+            System.out.println("token = " + token);
             filterChain.doFilter(request, response);
             return;
         }
 
-        String token = header.replace("Bearer ", "");
-
-        try {
-            if (isFirebaseToken(token)) {
-                validateFirebaseToken(token);
-            } else {
-                validateKakaoToken(token);
+        if (token != null) {
+            try {
+                if (isFirebaseToken(token)) {
+                    System.out.println("not firebase");
+                    validateFirebaseToken(token);
+                } else {
+                    System.out.println("it's jwt token");
+                    validateJwtToken(token);
+                }
+            } catch (Exception e) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().write("Unauthorized: Invalid Token");
+                return;
             }
 
-        } catch (Exception e) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Unauthorized: Invalid Token");
-            return;
         }
-
         filterChain.doFilter(request, response);
     }
 
@@ -71,42 +75,51 @@ public class TokenFilter extends OncePerRequestFilter {
     private void validateFirebaseToken(String token) throws Exception {
         FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(token);
         String uid = decodedToken.getUid();
-        User user = userRepository.findByUid(uid);
-        if (user == null || (!"GOOGLE".equals(user.getSocialType()) && !"APPLE".equals(user.getSocialType()))) {
+        Long id = Long.parseLong(uid);
+        System.out.println("id = " + id);
+
+        Optional<User> user = userRepository.findById(id);   //수정 필요 string int
+
+        if (user.isEmpty() || (!"GOOGLE".equals(user.get().getSocialType()) && !"APPLE".equals(user.get().getSocialType()))) {
             throw new Exception("Invalid GOOGLE/APPLE user");
         }
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(uid, null, null));
     }
 
-    private void validateKakaoToken(String token) throws Exception {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + token);
-        HttpEntity<String> entity = new HttpEntity<>(headers);
 
-        ResponseEntity<Map> response = restTemplate.exchange(
-                "https://kapi.kakao.com/v1/user/access_token_info",
-                HttpMethod.GET,
-                entity,
-                Map.class
-        );
+    private void validateJwtToken(String token) throws Exception {
 
-        if (response.getStatusCode() != HttpStatus.OK) {
-            throw new Exception("Invalid Kakao Token");
+        if(jwtTokenProvider.validateAndGetUserId(token) == null) {
+            System.out.println("Invalid JWT token");
+            throw new Exception("Invalid JWT token");
         }
 
-        Map<String, Object> body = response.getBody();
-        String kakaoUserId = body.get("id").toString();
-        User user = userRepository.findByUid(kakaoUserId);
-        if (user == null || !"KAKAO".equals(user.getSocialType())) {
-            throw new Exception("Invalid KAKAO user");
+        try {
+            String userId = jwtTokenProvider.validateAndGetUserId(token);
+            System.out.println("userId = " + userId);
+
+            Optional<User> user = userRepository.findById(Long.parseLong(userId));
+            if (user.isEmpty()) {
+                System.out.println("Invalid JWT token");
+                throw new Exception("Invalid JWT token");
+            }
+            SecurityContextHolder.getContext().setAuthentication(
+                    new UsernamePasswordAuthenticationToken(userId, null, null)
+            );
+        } catch (Exception e) {
+            System.out.println("Error in validateJwtToken: " + e.getMessage());
+            throw new Exception("Invalid JWT token");
         }
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(kakaoUserId, null, null));
     }
 
-
-
+    private String resolveToken(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
+    }
 }
 
 
