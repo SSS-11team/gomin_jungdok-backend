@@ -67,9 +67,9 @@ public class AuthController {
     })
     public ResponseEntity<Map<String, Object>> kakaoCallback(
             @Parameter(description = "카카오에서 전달된 인증 코드", required = true)
-            @RequestParam("code") String code) {
+            @RequestParam("accessToken") String accessToken) {
 
-        String accessToken = kakaoService.getKakaoAccessToken(code);
+        //String accessToken = kakaoService.getKakaoAccessToken(code);
         System.out.println("accessToken = " + accessToken);
 
         AuthTokens tokens = kakaoService.kakaoLogin(accessToken);
