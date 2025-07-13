@@ -64,7 +64,8 @@ public class JwtUtil {
         System.out.println("2. AuthTokensGenerator 사용하여 Access Token 재발급");
         AuthTokens newTokens = generate(userId);
 
-        return AuthTokens.of(newTokens.getAccessToken(), refreshToken, BEARER_TOKEN, ACCESS_TOKEN_EXPIRATION_TIME);
+        // return AuthTokens.of(newTokens.getAccessToken(), refreshToken, BEARER_TOKEN, ACCESS_TOKEN_EXPIRATION_TIME);
+        return AuthTokens.of(newTokens.getAccessToken(), refreshToken);
     }
 
     private Claims parseClaims(String token) {
@@ -87,6 +88,7 @@ public class JwtUtil {
         String accessToken = accessTokenGenerate(id, accessTokenExpiresAt);
         String refreshToken = accessTokenGenerate(id, refreshTokenExpiresAt);
 
-        return AuthTokens.of(accessToken, refreshToken, BEARER_TOKEN, ACCESS_TOKEN_EXPIRATION_TIME);
+        // return AuthTokens.of(accessToken, refreshToken, BEARER_TOKEN, ACCESS_TOKEN_EXPIRATION_TIME);
+        return AuthTokens.of(accessToken, refreshToken);
     }
 }

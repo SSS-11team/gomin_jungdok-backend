@@ -17,7 +17,7 @@ public class UserInfoDto {
     @Schema(example = "1L")
     private Long id;
     @Schema(example = "user@example.com")
-    private String socialId;
+    private String email;
     @Schema(example = "KAKAO")
     private String socialType;
     @Schema(example = "익명")

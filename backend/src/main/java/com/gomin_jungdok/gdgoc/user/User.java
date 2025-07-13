@@ -19,7 +19,7 @@ public class User {
     @Column(name = "user_id", nullable = false)
     private Long id;
 
-    @Column(name = "id")
+    @Column(name = "id")   // 로그인 id
     private String userId;
 
     @Column(name = "password")
@@ -38,7 +38,7 @@ public class User {
     private String email;
 
     @Column(name = "social_id")
-    private String socialId;
+    private Long socialId;
 
     @Column(name = "social_type", nullable = false)
     private String socialType;

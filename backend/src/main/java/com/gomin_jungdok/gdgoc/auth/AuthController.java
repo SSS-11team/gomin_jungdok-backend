@@ -14,7 +14,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -67,12 +66,19 @@ public class AuthController {
     })
     public ResponseEntity<Map<String, Object>> kakaoCallback(
             @Parameter(description = "카카오에서 전달된 인증 코드", required = true)
-            @RequestParam("accessToken") String accessToken) {
+            @RequestHeader("Authorization") String bearerToken) {
 
-        //String accessToken = kakaoService.getKakaoAccessToken(code);
-        System.out.println("accessToken = " + accessToken);
+        // String code = bearerToken.replace("Bearer ", "");
+        String accessTokenFromClient = bearerToken.replace("Bearer ", "");
 
-        AuthTokens tokens = kakaoService.kakaoLogin(accessToken);
+        // 카카오로부터 accessToken 받아옴
+        // flutter로부터 가져온 것이 code일 경우
+        // accessTokenFromClient = kakaoService.getKakaoAccessToken(code);
+
+        // flutter로부터 가져온 것이 accessToken일 경우 -> 바로 카카오에서 user정보 가져와서 jwt토큰 생성
+        // 카카오 accessToken으로 jwt 토큰 생성
+        System.out.println("accessTokenFromClient = " + accessTokenFromClient);
+        AuthTokens tokens = kakaoService.kakaoLogin(accessTokenFromClient);
 
         Map<String, Object> response = new HashMap<>();
 
@@ -85,11 +91,11 @@ public class AuthController {
 
             response.put("statusCode", 200);
             response.put("message", "로그인 성공");
-            response.put("jwtToken", tokens);
+            response.put("authToken", tokens);
         }
 
         return ResponseEntity.ok()
-                .header("Authorization", "Bearer " + accessToken) // 헤더에 액세스 토큰 추가
+                .header("Authorization", "Bearer " + accessTokenFromClient) // 헤더에 액세스 토큰 추가
                 .body(response); // 바디에 유저 정보 포함
 
     }
@@ -103,43 +109,43 @@ public class AuthController {
             @ApiResponse(responseCode = "401", description = "토큰 생성 실패",
                     content = @Content(mediaType = "application/json", schema = @Schema(example = "{\"statusCode\": 401, \"message\": \"토큰 생성 실패\"}")))
     })
-    public UserInfoDto getUser(@RequestHeader("Authorization") String accessToken) throws Exception {
+    public UserInfoDto getUser(@RequestHeader("Authorization") String jwtaccessToken) throws Exception {
 
-        System.out.println("accessToken = " + accessToken);
-        UserInfoDto userInfo = kakaoService.getUserInfo(accessToken);
+        System.out.println("jwtaccessToken = " + jwtaccessToken);
+        UserInfoDto userInfo = kakaoService.getUserInfoByJwt(jwtaccessToken);
         System.out.println("userInfo = " + userInfo);
         return userInfo;
     }
 
 
-    @PostMapping(value = "/kakao/refresh")
-    @Operation(summary = "api/auth/kakao/refresh")
-    @ApiResponse(responseCode = "200", description = "refresh token 발급 성공",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = KakaoLoginResponse.class)))
-    public ResponseEntity<Map<String, Object>> refresh(@RequestHeader ("Authorization") String refreshToken) {
-        if (refreshToken.startsWith("Bearer ")) {
-            System.out.println("refreshToken = " + refreshToken);
-            refreshToken = refreshToken.substring(7); // "Bearer " 제거
-        }
-        System.out.println("refreshToken = " + refreshToken);
-
-        AuthTokens newTokens = jwtUtil.refreshAccessToken(refreshToken);
-        String accessToken = newTokens.getAccessToken();
-
-        Map<String, Object> response = new HashMap<>();
-
-
-        if (newTokens != null)
-        {
-            response.put("statusCode", 200);
-            response.put("message", "로그인 성공");
-            response.put("newTokens", newTokens);
-        }
-
-        return ResponseEntity.ok()
-                .header("Authorization", "Bearer " + accessToken) // 헤더에 액세스 토큰 추가
-                .body(response); // 바디에 유저 정보 포함
-    }
+//    @PostMapping(value = "/kakao/refresh")
+//    @Operation(summary = "api/auth/kakao/refresh")
+//    @ApiResponse(responseCode = "200", description = "jwt token 재발급 성공",
+//            content = @Content(mediaType = "application/json", schema = @Schema(implementation = KakaoLoginResponse.class)))
+//    public ResponseEntity<Map<String, Object>> refresh(@RequestHeader ("Authorization") String jwtRefreshToken) {
+//        if (jwtRefreshToken.startsWith("Bearer ")) {
+//            System.out.println("jwtRefreshToken = " + jwtRefreshToken);
+//            jwtRefreshToken = jwtRefreshToken.substring(7); // "Bearer " 제거
+//        }
+//        System.out.println("refreshToken = " + jwtRefreshToken);
+//
+//        AuthTokens newTokens = jwtUtil.refreshAccessToken(jwtRefreshToken);
+//        String jwtAccessToken = newTokens.getAccessToken();
+//
+//        Map<String, Object> response = new HashMap<>();
+//
+//
+//        if (newTokens != null)
+//        {
+//            response.put("statusCode", 200);
+//            response.put("message", "로그인 성공");
+//            response.put("newTokens", newTokens);
+//        }
+//
+//        return ResponseEntity.ok()
+//                .header("Authorization", "Bearer " + jwtAccessToken) // 헤더에 액세스 토큰 추가
+//                .body(response); // 바디에 유저 정보 포함
+//    }
 
     @PostMapping(value = "/kakao/logout")
     @Operation(summary = "api/auth/kakao/logout")
@@ -170,4 +176,7 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+
+
+    
 }
