@@ -1,12 +1,10 @@
 package com.gomin_jungdok.gdgoc.comment;
 
-import com.gomin_jungdok.gdgoc.user.User;
 import com.gomin_jungdok.gdgoc.post.Post;
+import com.gomin_jungdok.gdgoc.user.User;
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.data.annotation.CreatedDate;
 
-import java.time.LocalDateTime;
 import java.util.Date;
 
 @Entity
@@ -32,7 +30,7 @@ public class Comment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "comment_id", nullable = false)
-    private long id; // 댓글 id
+    private Long id; // 댓글 id
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
@@ -46,13 +44,17 @@ public class Comment {
     @JoinColumn(name = "parent_comment_id")
     private Comment parentComment; // 부모 댓글
 
-    @Column(name="comment_desc", columnDefinition = "TEXT", nullable = false)
+    @Column(name = "comment_desc", columnDefinition = "TEXT", nullable = false)
     private String description; // 댓글 내용
 
-    @Column(name="hierarchy", nullable = false)
+    @Column(name = "hierarchy", nullable = false)
     private int hierarchy = 0; // 댓글 계층
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt = new Date();
+
+    @Column(name = "deleted_at")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date deletedAt;
 }

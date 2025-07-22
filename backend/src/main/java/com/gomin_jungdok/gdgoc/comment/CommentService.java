@@ -58,7 +58,7 @@ public class CommentService {
         // TODO 로그인 구현 후 token에서 userId 추출해서 currentUserId에 사용하도록 수정해야함
         Long currentUserId = 1L;
 
-        List<Comment> comments = commentRepository.findByPost(post);
+        List<Comment> comments = commentRepository.findByPostAndDeletedAtIsNull(post);
 
         return comments.stream().map(comment -> {
             User commentWriter = comment.getUser();

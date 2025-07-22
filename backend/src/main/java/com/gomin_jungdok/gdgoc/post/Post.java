@@ -44,4 +44,8 @@ public class Post {
     @Column(name = "category", nullable = false)
     @Enumerated(EnumType.STRING)
     private PostCategory postCategory = PostCategory.ETC;
+
+    @Column(name = "deleted_at")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date deletedAt;
 }
