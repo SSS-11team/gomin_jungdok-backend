@@ -5,6 +5,7 @@ import com.gomin_jungdok.gdgoc.auth.Dto.UserInfoDto;
 import com.gomin_jungdok.gdgoc.jwt.AuthTokens;
 import com.gomin_jungdok.gdgoc.jwt.AuthTokensGenerator;
 import com.gomin_jungdok.gdgoc.jwt.JwtUtil;
+import com.gomin_jungdok.gdgoc.user.UserRepository;
 import com.gomin_jungdok.gdgoc.user.User;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
@@ -17,7 +18,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.util.MultiValueMap;
 import java.util.Map;
 
-import static com.gomin_jungdok.gdgoc.auth.Converter.KakaoAuthConverter.toUserKakao;
+import static com.gomin_jungdok.gdgoc.auth.Converter.AuthConverter.toUserKakao;
 
 @Service
 @RequiredArgsConstructor
@@ -31,7 +32,7 @@ public class KakaoService {
     @Value("${kakao.redirect-uri}")
     private String redirectUri;
 
-    private final KakaoRepository kakaoRepository;
+    private final UserRepository userRepository;
     private final AuthTokensGenerator authTokensGenerator;
 
 
@@ -118,12 +119,12 @@ public class KakaoService {
             System.out.println("email = " + email);
             System.out.println("Kakaoid = " + Kakaoid);
 
-            User user = kakaoRepository.findByEmail(email);
+            User user = userRepository.findByEmail(email);
 
             if (user == null) {
                 System.out.println("user is null");
-                user = toUserKakao(email, Kakaoid);
-                kakaoRepository.save(user);
+                user = toUserKakao(Kakaoid);
+                userRepository.save(user);
             }
 
             userInfo.setId(user.getId());
@@ -170,45 +171,6 @@ public class KakaoService {
         }
     }
 
-//    public String createFirebaseCustomToken(UserInfoDto userInfo) throws Exception {
-//
-//        UserRecord userRecord;
-//        String email = userInfo.getSocialId();
-//
-//        // 이메일이 없으면 예외 처리
-//        if (email == null || email.isEmpty()) {
-//            throw new IllegalArgumentException("이메일이 필요합니다.");
-//        }
-//
-//        // 1. 사용자 정보로 파이어 베이스 유저정보 update, 사용자 정보가 있다면 userRecord에 유저 정보가 담긴다.
-//        try {
-//            // 이메일을 기반으로 Firebase 사용자 정보 가져오기
-//            userRecord = FirebaseAuth.getInstance().getUserByEmail(email);
-//            // 1-2. 사용자 정보가 없다면 > catch 구분에서 createUser로 사용자를 생성한다.
-//        } catch (FirebaseAuthException e) {
-//            // 사용자가 존재하지 않으면 새로 생성 (uid는 자동 생성됨)
-//            UserRecord.CreateRequest createRequest = new UserRecord.CreateRequest()
-//                    .setEmail(email)
-//                    .setEmailVerified(true) // 이메일 인증 여부 (필요하면 true)
-//                    .setDisplayName(userInfo.getNickname());
-//
-//            userRecord = FirebaseAuth.getInstance().createUser(createRequest);
-//
-//        }
-//        // 3. Firebase에서 생성된 uid를 가져옴
-//        String firebaseUid = userRecord.getUid();
-//
-//        // 4. 해당 사용자의 DB 정보 업데이트 (uid 저장)
-//        User user = kakaoRepository.findByEmail(email);
-//        if (user != null) {
-//            user.setUid(firebaseUid); // Firebase의 uid 저장
-//            kakaoRepository.save(user);
-//        }
-//
-//        // 5. Firebase Custom Token 생성 후 리턴
-//        return FirebaseAuth.getInstance().createCustomToken(firebaseUid);
-//
-//    }
 
     public UserInfoDto getUserInfoByJwt(String accessToken) {
         System.out.println("accessToken = " + accessToken);
@@ -216,7 +178,7 @@ public class KakaoService {
 
         Long userId = Long.parseLong(jwtTokenProvider.validateAndGetUserId(accessToken));
         UserInfoDto userInfo = new UserInfoDto();
-        User user = kakaoRepository.findById(userId).get();
+        User user = userRepository.findById(userId).get();
 
         userInfo.setId(userId);
         userInfo.setCreatedAt(user.getCreatedAt());

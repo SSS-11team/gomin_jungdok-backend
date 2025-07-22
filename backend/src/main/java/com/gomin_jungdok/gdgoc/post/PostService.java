@@ -4,34 +4,28 @@ import com.gomin_jungdok.gdgoc.post.dto.PostWriteRequestDto;
 import com.gomin_jungdok.gdgoc.post.dto.PostListDetailResponseDto;
 import com.gomin_jungdok.gdgoc.post.dto.PostDetailResponseDto;
 import com.gomin_jungdok.gdgoc.post.dto.PostListResponseDto;
-import com.gomin_jungdok.gdgoc.post.dto.PostWriteRequestDto;
 import com.gomin_jungdok.gdgoc.post.post_image.PostImage;
 import com.gomin_jungdok.gdgoc.post.post_image.PostImageService;
 import com.gomin_jungdok.gdgoc.post.post_image.PostImageRepository;
+import com.gomin_jungdok.gdgoc.user.UserRepository;
 import com.gomin_jungdok.gdgoc.vote_option.VoteOption;
 import com.gomin_jungdok.gdgoc.vote_option.VoteOptionRepository;
 import com.gomin_jungdok.gdgoc.vote.VoteResultDTO;
 import com.gomin_jungdok.gdgoc.user.User;
-import com.gomin_jungdok.gdgoc.user.UserRepository;
 import com.gomin_jungdok.gdgoc.vote.VoteUtils;
 import com.gomin_jungdok.gdgoc.vote.VoteRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.repository.query.Param;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -40,8 +34,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service

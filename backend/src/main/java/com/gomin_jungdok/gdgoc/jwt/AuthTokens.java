@@ -1,5 +1,6 @@
 package com.gomin_jungdok.gdgoc.jwt;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,7 +12,9 @@ import lombok.Setter;
 @AllArgsConstructor
 public class AuthTokens {
 
+    @Schema(example = "jwtAccessToken")
     private String accessToken;
+    @Schema(example = "jwtRefreshToken")
     private String refreshToken;
 //    private String grantType;
 //    private Long expiresIn;

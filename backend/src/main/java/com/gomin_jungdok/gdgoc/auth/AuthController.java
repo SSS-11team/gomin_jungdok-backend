@@ -1,10 +1,11 @@
 package com.gomin_jungdok.gdgoc.auth;
 
-import com.gomin_jungdok.gdgoc.auth.Dto.KakaoLoginResponse;
+import com.gomin_jungdok.gdgoc.auth.Dto.LoginResponse;
+import com.gomin_jungdok.gdgoc.auth.Dto.LogoutResponse;
 import com.gomin_jungdok.gdgoc.auth.Dto.UserInfoDto;
 import com.gomin_jungdok.gdgoc.jwt.AuthTokens;
+import com.gomin_jungdok.gdgoc.jwt.JwtBlacklistService;
 import com.gomin_jungdok.gdgoc.jwt.JwtUtil;
-import com.gomin_jungdok.gdgoc.jwt.kakaoLogoutRequestDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -30,6 +31,10 @@ public class AuthController {
 
     private final KakaoService kakaoService;
     private final JwtUtil jwtUtil;
+
+    private final AppleService appleService;
+    private final JwtBlacklistService jwtBlacklistService;
+    private final DeleteUserService deleteUserService;
 
     @Value("${kakao.client}")
     private String clientId;
@@ -59,7 +64,7 @@ public class AuthController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "로그인 성공",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = KakaoLoginResponse.class))),
+                            schema = @Schema(implementation = LoginResponse.class))),
             @ApiResponse(responseCode = "401", description = "토큰 생성 실패",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(example = "{\"statusCode\": 401, \"message\": \"토큰 생성 실패\"}")))
@@ -109,7 +114,9 @@ public class AuthController {
             @ApiResponse(responseCode = "401", description = "토큰 생성 실패",
                     content = @Content(mediaType = "application/json", schema = @Schema(example = "{\"statusCode\": 401, \"message\": \"토큰 생성 실패\"}")))
     })
-    public UserInfoDto getUser(@RequestHeader("Authorization") String jwtaccessToken) throws Exception {
+    public UserInfoDto getUser(
+            @Parameter(description = "jwtaccessToken", required = true)
+            @RequestHeader("Authorization") String jwtaccessToken) throws Exception {
 
         System.out.println("jwtaccessToken = " + jwtaccessToken);
         UserInfoDto userInfo = kakaoService.getUserInfoByJwt(jwtaccessToken);
@@ -118,65 +125,141 @@ public class AuthController {
     }
 
 
-//    @PostMapping(value = "/kakao/refresh")
-//    @Operation(summary = "api/auth/kakao/refresh")
-//    @ApiResponse(responseCode = "200", description = "jwt token 재발급 성공",
-//            content = @Content(mediaType = "application/json", schema = @Schema(implementation = KakaoLoginResponse.class)))
-//    public ResponseEntity<Map<String, Object>> refresh(@RequestHeader ("Authorization") String jwtRefreshToken) {
-//        if (jwtRefreshToken.startsWith("Bearer ")) {
-//            System.out.println("jwtRefreshToken = " + jwtRefreshToken);
-//            jwtRefreshToken = jwtRefreshToken.substring(7); // "Bearer " 제거
-//        }
-//        System.out.println("refreshToken = " + jwtRefreshToken);
-//
-//        AuthTokens newTokens = jwtUtil.refreshAccessToken(jwtRefreshToken);
-//        String jwtAccessToken = newTokens.getAccessToken();
-//
-//        Map<String, Object> response = new HashMap<>();
-//
-//
-//        if (newTokens != null)
-//        {
-//            response.put("statusCode", 200);
-//            response.put("message", "로그인 성공");
-//            response.put("newTokens", newTokens);
-//        }
-//
-//        return ResponseEntity.ok()
-//                .header("Authorization", "Bearer " + jwtAccessToken) // 헤더에 액세스 토큰 추가
-//                .body(response); // 바디에 유저 정보 포함
-//    }
+    @PostMapping(value = "/refresh")
+    @Operation(summary = "api/auth/refresh")
+    @ApiResponse(responseCode = "200", description = "jwt token 재발급 성공",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = LoginResponse.class)))
+    public ResponseEntity<Map<String, Object>> refresh(@RequestHeader ("Authorization") String jwtRefreshToken) {
+        if (jwtRefreshToken.startsWith("Bearer ")) {
+            System.out.println("jwtRefreshToken = " + jwtRefreshToken);
+            jwtRefreshToken = jwtRefreshToken.substring(7); // "Bearer " 제거
+        }
+        System.out.println("refreshToken = " + jwtRefreshToken);
 
-    @PostMapping(value = "/kakao/logout")
-    @Operation(summary = "api/auth/kakao/logout")
+        AuthTokens newTokens = jwtUtil.refreshAccessToken(jwtRefreshToken);
+        String jwtAccessToken = newTokens.getAccessToken();
+
+        Map<String, Object> response = new HashMap<>();
+
+
+        if (jwtAccessToken != null)
+        {
+            response.put("statusCode", 200);
+            response.put("message", "로그인 성공");
+            response.put("jwtAccessToken", jwtAccessToken);
+        }
+
+        return ResponseEntity.ok()
+                // .header("Authorization", "Bearer " + jwtAccessToken) // 헤더에 액세스 토큰 추가
+                .body(response); // 바디에 유저 정보 포함
+    }
+    // refresh => 이때 jwt refresh토큰을 보내는지, 카카오 refresh 토큰을 보내는지 확인
+
+    @PostMapping(value = "/firebase/login")
+    @Operation(summary = "/api/auth/firebase/login")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "로그인 성공",
-                    content = @Content(mediaType = "application/json", schema = @Schema(example = "{\"statusCode\": 200, \"message\": \"로그인 성공\"}"))),
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = LoginResponse.class))),
             @ApiResponse(responseCode = "401", description = "토큰 생성 실패",
-                    content = @Content(mediaType = "application/json", schema = @Schema(example = "{\"statusCode\": 401, \"message\": \"토큰 생성 실패\"}"))),
-            @ApiResponse(responseCode = "500", description = "로그아웃 실패",
-                    content = @Content(mediaType = "application/json", schema = @Schema(example = "{\"statusCode\": 500, \"message\": \"로그아웃 실패\"}")))
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(example = "{\"statusCode\": 401, \"message\": \"토큰 생성 실패\"}")))
     })
-    public ResponseEntity<Map<String, Object>> kakaoLogout(@RequestHeader ("Authorization") @Parameter(description = "jwt 토큰의 accessToken", example = "jwtAccessToken") String jwtAccessToken, @RequestBody @Parameter(description = "카카오에서 제공하는 accessToken", example = "kakaoAccessToken") kakaoLogoutRequestDto body) {
+    public ResponseEntity<Map<String, Object>> appleLogin(@RequestHeader("Authorization") String bearerToken) throws Exception {
+        // 1. 토큰 추출
+        String idToken = bearerToken.replace("Bearer ", "");
 
-        // 본문에서 카카오 액세스 토큰 추출
-        String kakaoAccessToken = body.getKakaoAccessToken();
-        System.out.println("kakaoAccessToken = " + kakaoAccessToken);
 
-        try {
-            kakaoService.kakaoLogout(kakaoAccessToken);
-            Map<String, Object> response = new HashMap<>();
+        // 2. Firebase 토큰 검증 및 사용자 조회 or 회원가입
+        AuthTokens authTokens = appleService.validateFirebaseToken(idToken);
+
+        Map<String, Object> response = new HashMap<>();
+
+        if (authTokens == null) {
+            response.put("statusCode", 401);
+            response.put("message", "토큰 생성 실패");
+        } else {
+
             response.put("statusCode", 200);
-            response.put("message", "로그아웃 성공");
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("statusCode", 500);
-            response.put("message", "로그아웃 실패 : " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            response.put("message", "로그인 성공");
+            response.put("jwtAuthToken", authTokens);
         }
+
+        return ResponseEntity.ok()
+                .header("Authorization", "Bearer " + authTokens) // 헤더에 액세스 토큰 추가
+                .body(response); // 바디에 유저 정보 포함
+
     }
 
 
-    
+
+
+    @PostMapping(value = "/logout")
+    @Operation(summary = "api/auth/logout")
+    @ApiResponse(responseCode = "200", description = "로그아웃 성공",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = LogoutResponse.class)))
+    public ResponseEntity<Map<String, Object>> Logout(@RequestHeader ("Authorization") @Parameter(description = "jwt 토큰의 accessToken", example = "jwtAccessToken") String jwtAccessToken) {
+        if (jwtAccessToken.startsWith("Bearer ")) {
+            System.out.println("jwtAccessToken = " + jwtAccessToken);
+            jwtAccessToken = jwtAccessToken.substring(7); // "Bearer " 제거
+        }
+
+        if(jwtAccessToken != null) {
+            jwtBlacklistService.blacklist(jwtAccessToken);
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("statusCode", 200);
+        response.put("message", "로그아웃 성공");
+
+        return ResponseEntity.ok()
+                .body(response); // 바디에 유저 정보 포함
+    }
+    @DeleteMapping(value = "/delete")
+    @Operation(summary = "api/auth/delete")
+    @ApiResponse(responseCode = "200", description = "회원 탈퇴 성공",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = LogoutResponse.class)))
+    public ResponseEntity<Map<String, Object>> DeleteUser(@RequestHeader ("Authorization") @Parameter(description = "jwt 토큰의 accessToken", example = "jwtAccessToken") String jwtAccessToken) {
+        if (jwtAccessToken.startsWith("Bearer ")) {
+            System.out.println("jwtAccessToken = " + jwtAccessToken);
+            jwtAccessToken = jwtAccessToken.substring(7); // "Bearer " 제거
+        }
+
+        if(jwtAccessToken != null) {
+            try {
+
+                UserInfoDto userInfo = appleService.getUserInfoByJwt(jwtAccessToken);
+                deleteUserService.deleteUser(userInfo.getId());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("statusCode", 200);
+        response.put("message", "회원 탈퇴 성공");
+
+        return ResponseEntity.ok()
+                .body(response); // 바디에 유저 정보 포함
+    }
+
+
+
+
+    @GetMapping("/firebase/user")
+    @Operation(summary = "api/auth/firebase/user",
+            security = @SecurityRequirement(name = "BearerAuth"))
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "로그인 성공",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserInfoDto.class))),
+            @ApiResponse(responseCode = "401", description = "토큰 생성 실패",
+                    content = @Content(mediaType = "application/json", schema = @Schema(example = "{\"statusCode\": 401, \"message\": \"토큰 생성 실패\"}")))
+    })
+    public UserInfoDto getAppleUser(@RequestHeader("Authorization") String jwtaccessToken) throws Exception {
+
+        System.out.println("jwtaccessToken = " + jwtaccessToken);
+        UserInfoDto userInfo = appleService.getUserInfoByJwt(jwtaccessToken);
+        System.out.println("userInfo = " + userInfo);
+        return userInfo;
+    }
 }

@@ -26,7 +26,7 @@ public class User {
     private String password;
 
     //firebase 사용 시 필요한 변수값
-    @Column(name = "uid", nullable = false)
+    @Column(name = "uid", nullable = true)
     private String uid;
 
     @NotBlank(message = "닉네임은 필수입니다.")
