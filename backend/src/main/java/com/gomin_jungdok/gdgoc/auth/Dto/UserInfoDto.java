@@ -17,14 +17,14 @@ public class UserInfoDto {
     @Schema(example = "1L")
     private Long id;
     @Schema(example = "user@example.com")
-    private String socialId;
+    private String email;
     @Schema(example = "KAKAO")
     private String socialType;
     @Schema(example = "익명")
     private String nickname;
     @Schema(example = "2025-03-20 00:49:18.0")
     private Date createdAt;
-//    private String profileImage;
+//    private String profileImage
 
 
 }
