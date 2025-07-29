@@ -169,7 +169,6 @@ public class AuthController {
         // 1. 토큰 추출
         String idToken = bearerToken.replace("Bearer ", "");
 
-
         // 2. Firebase 토큰 검증 및 사용자 조회 or 회원가입
         AuthTokens authTokens = appleService.validateFirebaseToken(idToken);
 

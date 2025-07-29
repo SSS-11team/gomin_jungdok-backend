@@ -22,7 +22,8 @@ public class NFMService {
 
     private final FirebaseMessaging firebaseMessaging;
 
-    @Scheduled(cron = "0 0 00 * * ?")
+    //@Scheduled(cron = "0 0 00 * * ?")
+    @Scheduled(cron = "0 */1 * * * ?")
     public void pushAlarm() throws FirebaseMessagingException {
         Message message = createMessage();
         firebaseMessaging.send(message);

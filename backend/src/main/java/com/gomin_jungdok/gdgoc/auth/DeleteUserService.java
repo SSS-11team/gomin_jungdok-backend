@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class DeleteUserService {
 
-    private final UserService userService;
     private final UserRepository userRepository;
 
 
