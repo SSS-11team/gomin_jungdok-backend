@@ -24,7 +24,8 @@ public class UserInfoDto {
     private String nickname;
     @Schema(example = "2025-03-20 00:49:18.0")
     private Date createdAt;
-//    private String profileImage
+    @Schema(example = "https://~~")
+    private String profileImage;
 
 
 }

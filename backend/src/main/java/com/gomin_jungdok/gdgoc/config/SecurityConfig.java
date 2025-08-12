@@ -21,34 +21,20 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
-@RequiredArgsConstructor
 @EnableWebSecurity
 public class SecurityConfig {
-
-    private final TokenFilter tokenFilter;
 
     @Bean
     public static PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors(withDefaults()) // CORS 설정 추가
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/api/auth/**",
-                                "/api/post/**",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**",
-                                "/swagger-ui.html"
-                        ).permitAll() // 인증 없이 접근 가능
-                        .anyRequest().authenticated() // 나머지 요청은 인증 필요
-                )
-                .addFilterBefore(tokenFilter, UsernamePasswordAuthenticationFilter.class); // Firebase 필터 추가
-
+                        .anyRequest().permitAll()
+                );
 
         return http.build();
     }
@@ -59,18 +45,5 @@ public class SecurityConfig {
                 .inMemoryAuthentication()
                 .withUser("user").password(passwordEncoder.encode("password"))
                 .roles("USER");
-    }
-
-    @Bean
-    public OpenAPI customOpenAPI() {
-        return new OpenAPI()
-                .components(new Components()
-                        .addSecuritySchemes("BearerAuth", new SecurityScheme()
-                                .type(SecurityScheme.Type.HTTP)
-                                .scheme("bearer")
-                                .bearerFormat("JWT")  // Firebase ID Token 사용
-                        )
-                )
-                .addSecurityItem(new SecurityRequirement().addList("BearerAuth")); // 기본 Security 적용
     }
 }

@@ -22,7 +22,4 @@ public class NotificationController {
         NFMService.pushAlarm();
         return ResponseEntity.ok("푸시 알림 전송용");
     }
-
-
-
 }

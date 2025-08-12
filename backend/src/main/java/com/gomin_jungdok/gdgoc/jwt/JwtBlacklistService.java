@@ -17,17 +17,17 @@ public class JwtBlacklistService {
         blacklist.put(token, expiry);
     }
 
-    public boolean isBlacklisted(String token) {
-        Long expiry = blacklist.get(token);
-        if (expiry == null) {
-            return false;
-        }
-        if(expiry < System.currentTimeMillis()) {
-            blacklist.remove(token);
-            return false;
-        }
-        return true;
-    }
+//    public boolean isBlacklisted(String token) {
+//        Long expiry = blacklist.get(token);
+//        if (expiry == null) {
+//            return false;
+//        }
+//        if(expiry < System.currentTimeMillis()) {
+//            blacklist.remove(token);
+//            return false;
+//        }
+//        return true;
+//    }
 
     private long extractExpiry(String token) {
         try {
@@ -37,7 +37,6 @@ public class JwtBlacklistService {
             Map<String, Object> claims = mapper.readValue(payload, Map.class);
             int exp = (int) claims.get("exp");
             return exp * 1000L;
-
 
         } catch (Exception e) {
             return System.currentTimeMillis() + ACCESS_TOKEN_EXPIRATION_TIME;

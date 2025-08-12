@@ -9,11 +9,15 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -40,6 +44,7 @@ public class TokenFilter extends OncePerRequestFilter {
             System.out.println(requestURI);
             System.out.println("token = " + token);
             filterChain.doFilter(request, response);
+            System.out.println("response = " + response);
             return;
         }
 
@@ -52,7 +57,6 @@ public class TokenFilter extends OncePerRequestFilter {
                 response.getWriter().write("Unauthorized: Invalid Token");
                 return;
             }
-
         }
         filterChain.doFilter(request, response);
     }
@@ -85,8 +89,10 @@ public class TokenFilter extends OncePerRequestFilter {
                 throw new Exception("Invalid GOOGLE/APPLE user");
             }
 
+            List<GrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
+
             SecurityContextHolder.getContext().setAuthentication(
-                    new UsernamePasswordAuthenticationToken(userId, null, null)
+                    new UsernamePasswordAuthenticationToken(userId, null, authorities)
             );
         } catch (Exception e) {
             System.out.println("Error in validateJwtToken: " + e.getMessage());
