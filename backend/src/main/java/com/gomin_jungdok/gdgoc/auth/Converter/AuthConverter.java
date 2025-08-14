@@ -24,13 +24,13 @@ public class AuthConverter {
         String uid = decodedToken.getUid();
         String email = decodedToken.getEmail();
         String socialType = determineSocialType(decodedToken);
-        String picture = decodedToken.getPicture();
+        // String picture = decodedToken.getPicture();
 
         return User.builder()
                 .uid(uid)
                 .nickname("익명")
                 .createdAt(new Date())
-                .profileImage(picture)
+                // .profileImage(picture)
                 .email(email)
                 .socialType(socialType)
                 .build();
@@ -40,6 +40,7 @@ public class AuthConverter {
         Object provider = decodedToken.getClaims().get("firebase").getClass().toString();
         System.out.println("provider = " + provider.toString());
         if (provider == null) return "UNKNOWN";
+        String email = decodedToken.getEmail();
 
         switch (provider.toString()) {
             case "class com.apple.api.client.util.ArrayMap":
@@ -47,11 +48,14 @@ public class AuthConverter {
                 return "APPLE";
             case "class com.google.api.client.util.ArrayMap":
                 System.out.println("provider = " + provider);
-                return "GOOGLE";
+                if (email.endsWith("@privaterelay.appleid.com")) {
+                    return "APPLE";
+                } else {
+                    return "GOOGLE";
+                }
             default:
                 return "UNKNOWN";
         }
     }
-
 
 }

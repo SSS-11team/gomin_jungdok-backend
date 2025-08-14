@@ -19,11 +19,11 @@ public class User {
     @Column(name = "user_id", nullable = false)
     private Long id;
 
-    @Column(name = "id")   // 로그인 id
-    private String userId;
+//    @Column(name = "id")   // 로그인 id
+//    private String userId;
 
-    @Column(name = "password")
-    private String password;
+//    @Column(name = "password")
+//    private String password;
 
     //firebase 사용 시 필요한 변수값
     @Column(name = "uid", nullable = true)

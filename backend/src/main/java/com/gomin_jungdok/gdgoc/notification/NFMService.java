@@ -5,15 +5,8 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.messaging.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 
 @Slf4j
 @Service
@@ -23,9 +16,15 @@ public class NFMService {
     private final FirebaseMessaging firebaseMessaging;
 
     @Scheduled(cron = "0 0 00 * * ?")
+    // @Scheduled(cron = "*/10 * * * * ?")
     public void pushAlarm() throws FirebaseMessagingException {
-        Message message = createMessage();
-        firebaseMessaging.send(message);
+        try {
+            Message message = createMessage();
+            String response = firebaseMessaging.send(message);
+            log.info("FCM 발송 성공: {}", response);
+        } catch (FirebaseMessagingException e) {
+            log.error("FCM 발송 실패", e);
+        }
     }
 
     private Message createMessage() {

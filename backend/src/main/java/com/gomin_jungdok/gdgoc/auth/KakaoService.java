@@ -43,6 +43,7 @@ public class KakaoService {
         UserInfoDto userInfo = getKakaoUserInfo(accessToken);
 
         Long userId = userInfo.getId();
+        System.out.println("userId = " + userId);
 
         AuthTokens authTokens = authTokensGenerator.generate(userId.toString());
 
@@ -119,13 +120,16 @@ public class KakaoService {
             System.out.println("email = " + email);
             System.out.println("Kakaoid = " + Kakaoid);
 
-            User user = userRepository.findByEmail(email);
+            User user = userRepository.findBySocialId(Kakaoid);
+            // System.out.println("user.getUserId() = " + user.getUserId());
 
             if (user == null) {
-                System.out.println("user is null");
+                System.out.println("user is null : kakao");
                 user = toUserKakao(Kakaoid);
                 userRepository.save(user);
             }
+
+            System.out.println("user.getId() = " + user.getId());
 
             userInfo.setId(user.getId());
             userInfo.setCreatedAt(user.getCreatedAt());
@@ -136,56 +140,40 @@ public class KakaoService {
         return userInfo;
     }
 
-    public void kakaoLogout(String accessToken) {
+//    public void kakaoLogout(String accessToken) {
+//
+//        String reqURL = "https://kapi.kakao.com/v1/user/logout";
+//
+//        RestTemplate rt = new RestTemplate();
+//
+//        // 헤더 설정
+//        HttpHeaders headers = new HttpHeaders();
+//        headers.set("Authorization", "Bearer " + accessToken);
+//        headers.setContentType(MediaType.APPLICATION_JSON);
+//        HttpEntity<String> entity = new HttpEntity<>(headers);
+//        System.out.println("headers = " + headers);
+//        System.out.println("entity = " + entity);
+//
+//
+//        try {
+//            System.out.println("POST 요청");
+//            ResponseEntity<Map> responseEntity = rt.exchange(reqURL, HttpMethod.POST, entity, Map.class);
+//            System.out.println("responseEntity = " + responseEntity);
+//
+//            System.out.println("응답 코드 및 응답 본문 처리");
+//            if (responseEntity.getStatusCode() == HttpStatus.OK) {
+//                System.out.println("성공적으로 로그아웃 처리");
+//                Map<String, Object> responseBody = responseEntity.getBody();
+//                System.out.println("필요한 작업을 여기에 처리");
+//                System.out.println("로그아웃 성공: " + responseBody);
+//            } else {
+//                throw new RuntimeException("로그아웃 실패: " + responseEntity.getStatusCode());
+//            }
+//
+//        } catch (Exception e) {
+//            throw new RuntimeException("카카오 로그아웃 요청 중 오류 발생: " + e.getMessage(), e);
+//        }
+//    }
 
-        String reqURL = "https://kapi.kakao.com/v1/user/logout";
 
-        RestTemplate rt = new RestTemplate();
-
-        // 헤더 설정
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + accessToken);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-        System.out.println("headers = " + headers);
-        System.out.println("entity = " + entity);
-
-
-        try {
-            System.out.println("POST 요청");
-            ResponseEntity<Map> responseEntity = rt.exchange(reqURL, HttpMethod.POST, entity, Map.class);
-            System.out.println("responseEntity = " + responseEntity);
-
-            System.out.println("응답 코드 및 응답 본문 처리");
-            if (responseEntity.getStatusCode() == HttpStatus.OK) {
-                System.out.println("성공적으로 로그아웃 처리");
-                Map<String, Object> responseBody = responseEntity.getBody();
-                System.out.println("필요한 작업을 여기에 처리");
-                System.out.println("로그아웃 성공: " + responseBody);
-            } else {
-                throw new RuntimeException("로그아웃 실패: " + responseEntity.getStatusCode());
-            }
-
-        } catch (Exception e) {
-            throw new RuntimeException("카카오 로그아웃 요청 중 오류 발생: " + e.getMessage(), e);
-        }
-    }
-
-
-    public UserInfoDto getUserInfoByJwt(String accessToken) {
-        System.out.println("accessToken = " + accessToken);
-        accessToken = accessToken.substring(7);
-
-        Long userId = Long.parseLong(jwtTokenProvider.validateAndGetUserId(accessToken));
-        UserInfoDto userInfo = new UserInfoDto();
-        User user = userRepository.findById(userId).get();
-
-        userInfo.setId(userId);
-        userInfo.setCreatedAt(user.getCreatedAt());
-        userInfo.setNickname(user.getNickname());
-        userInfo.setEmail(user.getEmail());
-        userInfo.setSocialType(user.getSocialType());
-
-        return userInfo;
-    }
 }
