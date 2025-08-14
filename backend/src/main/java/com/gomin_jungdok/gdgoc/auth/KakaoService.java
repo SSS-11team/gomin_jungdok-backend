@@ -121,7 +121,7 @@ public class KakaoService {
             System.out.println("Kakaoid = " + Kakaoid);
 
             User user = userRepository.findBySocialId(Kakaoid);
-            System.out.println("user.getUserId() = " + user.getUserId());
+            // System.out.println("user.getUserId() = " + user.getUserId());
 
             if (user == null) {
                 System.out.println("user is null : kakao");

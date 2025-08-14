@@ -6,6 +6,7 @@ import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,8 +27,11 @@ public class ProfileImageService {
         this.storage = StorageOptions.getDefaultInstance().getService();
     }
 
-    public void uploadProfileImage(MultipartFile file, User user) throws IOException {
+    public void uploadProfileImage(MultipartFile file, Long userid) throws IOException {
         if (file != null && !file.isEmpty()) {
+
+            User user = userRepository.findById(userid)
+                    .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
             String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
 
@@ -38,6 +42,7 @@ public class ProfileImageService {
             String imageUrl = "https://storage.googleapis.com/" + bucketName + "/" + fileName;
 
             user.setProfileImage(imageUrl);
+            userRepository.save(user);
 
         }
     }

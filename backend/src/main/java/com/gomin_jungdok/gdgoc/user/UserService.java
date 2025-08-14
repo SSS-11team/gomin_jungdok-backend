@@ -42,13 +42,7 @@ public class UserService {
 
         // Long userid = Long.parseLong(jwtUtil.validateAndGetUserId(jwtToken));
 
-        User user = userRepository.findById(userid)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-
-        // user.setProfileImage(newImage);
-        // userRepository.save(user);
-
-        profileImageService.uploadProfileImage(newImage, user);
+        profileImageService.uploadProfileImage(newImage, userid);
 
 
 

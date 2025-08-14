@@ -30,6 +30,7 @@ public class PostImageService {
         List<PostImage> postImages = new ArrayList<>();
         if (files != null && !files.isEmpty()) {
             int orderSequence = 1;
+
             for (MultipartFile file : files) {
                 String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
 
