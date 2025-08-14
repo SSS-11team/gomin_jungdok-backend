@@ -36,11 +36,11 @@ public class UserService {
 
     }
 
-//     public void updateProfile(String jwtToken, String newNickname) throws Exception {
-    public void updateProfile(Long userid, MultipartFile newImage) throws Exception {
+    public void updateProfile(String jwtToken, MultipartFile newImage) throws Exception {
+//     public void updateProfile(Long userid, MultipartFile newImage) throws Exception {
         System.out.println("newImage = " + newImage);
 
-        // Long userid = Long.parseLong(jwtUtil.validateAndGetUserId(jwtToken));
+        Long userid = Long.parseLong(jwtUtil.validateAndGetUserId(jwtToken));
 
         profileImageService.uploadProfileImage(newImage, userid);
 

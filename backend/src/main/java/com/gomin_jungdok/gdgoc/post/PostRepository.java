@@ -33,4 +33,13 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     void updateTodayPostStatus(@Param("todayPosts") List<Long> todayPosts, @Param("status") boolean status);
 
     long countByUserIdAndDeletedAtIsNotNull(Long userId);
+
+    @Query("SELECT p FROM Post p WHERE (:lastId IS NULL OR p.id < :lastId)" +
+            " AND p.userId = :userId" +
+            " AND p.deletedAt IS NULL" +
+            " ORDER BY p.id DESC")
+    List<Post> findPostsByUserAfterId(@Param("userId") Long userId, @Param("lastId") Long lastId, Pageable pageable);
+
+
+
 }
