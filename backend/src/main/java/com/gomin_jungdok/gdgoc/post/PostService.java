@@ -313,4 +313,37 @@ public class PostService {
                 //comments
         );
     }
+
+    public PostListResponseDto getUserPosts(Long id, int size, Long lastId, List<String> category) {
+        Pageable pageable = PageRequest.of(0, size);
+
+        List<Post> posts;
+
+        posts = postRepository.findPostsByUserAfterId(id, lastId, pageable);
+
+        List<PostListDetailResponseDto> postListDetails = posts.stream().map(post -> {
+            boolean isMine = post.getUserId().equals(id);
+            boolean isAi = post.isAI();
+
+            List<VoteOption> voteOptions = voteOptionRepository.findByPostId(post.getId());
+            Map<String, Object> voteResult = VoteUtils.calculateVoteResults(voteOptions, voteRepository, true); // 본인 글이므로 무조건 true
+
+            return new PostListDetailResponseDto(
+                    post.getId(),
+                    false, // 본인 글은 투표 여부 의미 없음
+                    isMine,
+                    isAi,
+                    post.getPostCategory().getValue(),
+                    post.getTitle(),
+                    (String) voteResult.get("option1Content"),
+                    (String) voteResult.get("option2Content"),
+                    (Long) voteResult.get("option1Votes"),
+                    (Long) voteResult.get("option2Votes"),
+                    (String) voteResult.get("option1Percentage"),
+                    (String) voteResult.get("option2Percentage")
+            );
+        }).collect(Collectors.toList());
+
+        return new PostListResponseDto(size, postListDetails);
+    }
 }
